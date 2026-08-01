@@ -174,7 +174,9 @@ php artisan serve
 ```
 
 The demo club signs in as `owner@arman.club` / `password` with club slug
-`bashgah-arman`; the platform admin is `admin@gymflow.ai` / `password`.
+`bashgah-arman`, and the platform admin is `admin@gymflow.ai` / `password`.
+Its forty members all have accounts too, so the member app can be opened
+against it straight away: `09131000001` through `09131000040`, same password.
 
 MySQL 8 and Redis are what production expects — set `DB_CONNECTION=mysql`,
 `QUEUE_CONNECTION=redis` and `CACHE_STORE=redis` in `.env`. SQLite is only
@@ -226,14 +228,16 @@ their phone number and password. Leave it out for a build that asks.
 cd backend && php artisan test
 ```
 
-213 feature tests covering tenant isolation, the check-in and quota engine,
+218 feature tests covering tenant isolation, the check-in and quota engine,
 booking capacity, membership lifecycle, invoicing and the cash box, the
 wallet, stock, permissions per role, the member app's endpoints, the AI
 engine, localisation, the audit trail, all 150 reports, campaign delivery
 across every channel, online payment including a gateway that says no, two
 factor sign-in, provider sign-in, backups, coach rosters, the platform
 wording screen, the nightly sweep, encryption at rest, and Persian shaping
-down to the individual presentation forms.
+down to the individual presentation forms, and the API's own edges — JSON on
+every path whatever the client sends, and a rate limit counted per user so
+one club's staff cannot throttle each other from a shared connection.
 
 ---
 

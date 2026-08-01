@@ -95,8 +95,13 @@ onMounted(async () => {
         </select>
       </div>
       <div class="min-w-56 grow">
-        <label class="label">{{ ui.t('members.search', 'Search') }}</label>
-        <input v-model="search" class="field" type="search" />
+        <label class="label">{{ ui.t('templates.search', 'Search') }}</label>
+        <input
+          v-model="search"
+          class="field"
+          type="search"
+          :placeholder="ui.t('templates.search_hint', 'Search a key or its wording…')"
+        />
       </div>
     </div>
 

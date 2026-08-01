@@ -195,4 +195,19 @@ return [
         'allow_self_signup' => (bool) env('GYMFLOW_OAUTH_SELF_SIGNUP', false),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Rate limits
+    |--------------------------------------------------------------------------
+    | Signed in traffic is counted per user so one club's staff cannot
+    | throttle each other from a shared office connection. Anonymous traffic
+    | is still counted per address, which is what guards the sign-in and
+    | gateway callback endpoints.
+    */
+
+    'rate_limit' => [
+        'per_user' => (int) env('GYMFLOW_RATE_LIMIT_USER', 300),
+        'per_ip' => (int) env('GYMFLOW_RATE_LIMIT_IP', 60),
+    ],
+
 ];

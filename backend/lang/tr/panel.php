@@ -308,6 +308,8 @@ return [
     ],
 
     'templates' => [
+        'search' => 'Ara',
+        'search_hint' => 'Anahtar veya metin ara…',
         'title' => 'Metinler',
         'hint' => 'Her kulübün başladığı metin. Bir satırı kendisi için değiştiren kulüp kendi sürümünü korur.',
         'group' => 'Grup',

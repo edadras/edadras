@@ -309,6 +309,8 @@ return [
     ],
 
     'templates' => [
+        'search' => 'Search',
+        'search_hint' => 'Search a key or its wording…',
         'title' => 'Wording',
         'hint' => 'The wording every club starts from. A club that rewrites a line for itself keeps its own version.',
         'group' => 'Group',

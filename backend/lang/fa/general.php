@@ -2,6 +2,8 @@
 
 return [
 
+    'not_found' => 'پیدا نشد.',
+
     'birthday_title' => 'تولدت مبارک!',
     'birthday_body' => 'تولدت مبارک :name. همه‌ی ما در باشگاه برایت سالی عالی آرزو می‌کنیم.',
     'birthday_body_gift' => 'تولدت مبارک :name. هدیه‌ی ما: :percent٪ تخفیف روی تمدید بعدی.',

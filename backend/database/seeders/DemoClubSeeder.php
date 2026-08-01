@@ -8,6 +8,7 @@ use App\Models\GymClass;
 use App\Models\Member;
 use App\Models\MembershipPlan;
 use App\Models\Product;
+use App\Models\Role;
 use App\Models\User;
 use App\Services\BookingService;
 use App\Services\InvoiceService;
@@ -58,7 +59,9 @@ class DemoClubSeeder extends Seeder
             $this->seedMembers($tenant);
         });
 
-        $this->command?->info("Demo club ready: {$tenant->name} ({$tenant->slug}) — owner@arman.club / password");
+        $this->command?->info("Demo club ready: {$tenant->name} ({$tenant->slug})");
+        $this->command?->info('  manager panel: owner@arman.club / password');
+        $this->command?->info('  member app:    09131000001 / password  (through 09131000040)');
     }
 
     protected function seedStaff($tenant): void
@@ -156,14 +159,33 @@ class DemoClubSeeder extends Seeder
         $firstNames = ['علی', 'زهرا', 'محمد', 'فاطمه', 'حسین', 'مریم', 'امیر', 'نرگس', 'رضا', 'سمیرا', 'یاسین', 'الهام'];
         $lastNames = ['محمدی', 'حسینی', 'رضایی', 'کریمی', 'موسوی', 'احمدی', 'جعفری', 'صادقی'];
 
+        $memberRoleId = Role::where('tenant_id', $tenant->id)->where('slug', Role::MEMBER)->value('id');
+
         foreach (range(1, 40) as $index) {
             $joined = now()->subDays(random_int(5, 300));
+            $phone = '0913'.str_pad((string) (1000000 + $index), 7, '0', STR_PAD_LEFT);
+
+            // Every demo member gets an account, so the member app can be
+            // opened against this club without hand-editing the database.
+            $account = User::create([
+                'tenant_id' => $tenant->id,
+                'name' => 'Member '.$index,
+                'email' => "member{$index}@arman.club",
+                'phone' => $phone,
+                'password' => 'password',
+                'locale' => 'fa',
+                'status' => 'active',
+            ]);
+
+            $account->roles()->attach($memberRoleId);
 
             $member = Member::create([
+                'user_id' => $account->id,
                 'code' => (string) (1000 + $index),
                 'first_name' => $firstNames[array_rand($firstNames)],
                 'last_name' => $lastNames[array_rand($lastNames)],
-                'phone' => '0913'.str_pad((string) random_int(1, 9999999), 7, '0', STR_PAD_LEFT),
+                'phone' => $phone,
+                'email' => $account->email,
                 'gender' => random_int(0, 1) ? 'male' : 'female',
                 'birth_date' => now()->subYears(random_int(18, 55))->subDays(random_int(0, 364)),
                 'height' => random_int(155, 195),
@@ -187,6 +209,8 @@ class DemoClubSeeder extends Seeder
                     $invoices->pay($invoice, (float) $invoice->total, ['cash', 'card', 'transfer'][random_int(0, 2)]);
                 }
             }
+
+            $account->update(['name' => $member->full_name]);
 
             $this->seedAttendance($member, $membership, $joined);
             $this->seedMeasurements($member);

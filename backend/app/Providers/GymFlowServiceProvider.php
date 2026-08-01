@@ -9,8 +9,11 @@ use App\Services\DatabaseTranslationLoader;
 use App\Support\Auditor;
 use App\Support\Permissions;
 use App\Tenancy\TenantContext;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class GymFlowServiceProvider extends ServiceProvider
@@ -46,5 +49,9 @@ class GymFlowServiceProvider extends ServiceProvider
 
         // Lets a notification list `push` next to `database`.
         Notification::extend('push', fn ($app) => $app->make(GymFlowPushChannel::class));
+
+        RateLimiter::for('gymflow', fn (Request $request) => $request->user()
+            ? Limit::perMinute((int) config('gymflow.rate_limit.per_user', 300))->by('user:'.$request->user()->id)
+            : Limit::perMinute((int) config('gymflow.rate_limit.per_ip', 60))->by($request->ip()));
     }
 }

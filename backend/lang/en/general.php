@@ -2,6 +2,8 @@
 
 return [
 
+    'not_found' => 'Not found.',
+
     'birthday_title' => 'Happy birthday!',
     'birthday_body' => 'Happy birthday, :name. Everyone at the club wishes you a great year.',
     'birthday_body_gift' => 'Happy birthday, :name. Your gift from us: :percent% off your next renewal.',

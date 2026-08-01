@@ -1,0 +1,36 @@
+# Laravel
+/backend/vendor
+/backend/node_modules
+/backend/public/build
+/backend/public/hot
+/backend/public/storage
+/backend/storage/*.key
+/backend/storage/pail
+/backend/.env
+/backend/.env.backup
+/backend/.phpunit.result.cache
+/backend/database/*.sqlite
+/backend/database/*.sqlite-journal
+/backend/Homestead.json
+/backend/Homestead.yaml
+/backend/auth.json
+
+# Admin panel
+/admin/node_modules
+/admin/dist
+/admin/.env
+
+# Flutter
+/mobile/**/.dart_tool
+/mobile/**/build
+/mobile/**/.packages
+/mobile/**/.flutter-plugins
+/mobile/**/.flutter-plugins-dependencies
+/mobile/**/pubspec.lock
+
+# Editors & OS
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+*.log

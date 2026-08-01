@@ -56,11 +56,60 @@ anything, for the screen the receptionist reads before confirming.
 Classes and pool sessions with capacity-safe booking under a row lock,
 coaches and their contracts, workout and nutrition programs, periodic body
 measurements with charts, invoices and payments feeding a daily cash
-register, a member wallet, a shop with stock movements, 18 reports with CSV
-export, CRM campaigns, and member ↔ coach chat.
+register, a member wallet, a shop with stock movements, and member ↔ coach
+chat — scoped so a member only ever sees their own threads.
 
 Seven system roles — owner, manager, reception, coach, cashier, accountant,
 member — over a wildcard permission catalogue, per club and editable.
+
+### Reports
+
+150 reports across eleven groups: overview, members, memberships, attendance,
+classes, coaches, finance, shop, training, engagement and administration. A
+registry maps each key to its group, the period controls the screen should
+offer and the query that runs it, so the panel knows to ask a rolling-window
+report for days rather than a date range. Every one is labelled in all three
+languages and exports to CSV.
+
+Two tests run all 150 — once against an empty club, once against one with
+real rows — so a broken query fails the build rather than a manager's screen.
+
+### Money in and out
+
+Members renew and top up from the app. A payment opens as pending, the member
+is sent to the club's gateway in their own browser, and the money is only
+recognised once the gateway itself confirms it — the browser coming back with
+`status=OK` is never enough. Zarinpal (Toman converted to Rial both ways),
+Stripe Checkout, and a sandbox that answers until a club connects a real one,
+so the whole flow can be walked through without a bank. Settling is
+idempotent, because payers refresh receipts and gateways retry callbacks.
+
+### Reaching members
+
+Campaigns go out over SMS (a generic HTTP gateway, so an Iranian or Turkish
+provider is a settings change rather than a new SDK), WhatsApp via Meta's
+Cloud API, Telegram, club-branded email, and push over FCM. Anything a club
+has not configured falls back to a log driver, so a campaign always completes
+and nothing leaves the building by accident. Bodies support `{name}`,
+`{code}`, `{club}`, `{expires}` and `{sessions}`, with a preview endpoint that
+renders one against a real member first. Above 25 recipients the send moves to
+a queued job that restores the campaign's club before it starts.
+
+### Security
+
+- **Two factor** over TOTP, written against RFC 6238 and checked against the
+  spec's own test vector. Enabling is two steps on purpose — a mis-scan must
+  not lock an owner out of their own club. Recovery codes are shown once,
+  stored hashed and spent on use; the secret is encrypted at rest.
+- **An audit trail** that actually records: create, update and delete on the
+  twelve models a manager would later ask "who changed this?" about, plus
+  sign-ins, refusals, failed attempts and password changes. Updates keep only
+  the columns that moved and what they were before. Passwords, tokens and QR
+  secrets are masked on the way in.
+- **Nightly backups** of the database and everything uploaded, pruned to the
+  number of archives a club wants to keep. MySQL is dumped with the password
+  in a 0600 credentials file rather than on a command line every user on the
+  box can read.
 
 ### The AI module
 
@@ -152,10 +201,12 @@ their phone number and password. Leave it out for a build that asks.
 cd backend && php artisan test
 ```
 
-106 feature tests covering tenant isolation, the check-in and quota engine,
+183 feature tests covering tenant isolation, the check-in and quota engine,
 booking capacity, membership lifecycle, invoicing and the cash box, the
 wallet, stock, permissions per role, the member app's endpoints, the AI
-engine, and localisation.
+engine, localisation, the audit trail, all 150 reports, campaign delivery
+across every channel, online payment including a gateway that says no, two
+factor sign-in, backups, coach rosters and the platform wording screen.
 
 ---
 
@@ -166,12 +217,31 @@ engine, and localisation.
   database.
 - **Admin panel** — builds, and was driven end to end in a headless browser
   against the running API: sign in, then every screen rendered against the
-  demo club with no console errors.
+  demo club with no console errors. Doing that turned up two real bugs, both
+  fixed: picking "to = today" in a report returned nothing, because a date
+  picker sends a bare date that parses to midnight; and sign-ins recorded no
+  actor in the audit trail, because there is no session yet when a login
+  happens.
 - **Mobile apps** — **not compiled.** No Flutter or Dart toolchain was
   available in this environment, so the Dart source has been written against
-  the documented APIs of Flutter 3.24, `mobile_scanner`, `qr_flutter` and
-  `fl_chart` but never run through `flutter analyze` or a build. Expect to
-  fix small things on the first `flutter pub get && flutter analyze`.
+  the documented APIs of Flutter 3.24, `mobile_scanner`, `qr_flutter`,
+  `fl_chart`, `nfc_manager` and `url_launcher` but never run through
+  `flutter analyze` or a build. What was checked by hand: every relative
+  import resolves, every shared model and widget referenced exists and is
+  exported, every endpoint the screens call is a registered route, and all
+  145 translation keys the apps ask for exist in all three languages. Expect
+  to fix small things on the first `flutter pub get && flutter analyze`.
+
+### Still missing
+
+Being straight about the gaps rather than leaving them to be discovered:
+
+- **OAuth / social sign-in.** The spec asks for it. Sign-in today is email or
+  phone plus password, with optional two factor. Nothing else is built.
+- **Invoice PDF fonts.** The PDF renders, but Persian needs the font drop
+  described below or the text comes out as boxes.
+- **Telegram chat ids.** The channel works, but nothing yet collects a
+  member's chat id, so in practice Telegram only reaches a broadcast chat.
 
 ---
 
@@ -179,8 +249,14 @@ engine, and localisation.
 
 `backend/config/gymflow.php` holds the platform's own settings: the supported
 locales and their direction, the brand palette, the check-in duplicate window
-and auto-checkout delay, when renewal reminders fire, and the AI module's
-model and effort.
+and auto-checkout delay, when renewal reminders fire, the AI module's model
+and effort, the messaging channels, the payment gateways and the backup
+schedule.
+
+Messaging and payment credentials are layered: `config/gymflow.php` is the
+platform floor, and a club's own `messaging.<channel>` / `payments.<gateway>`
+settings sit on top — so one gym brings its own SMS gateway without touching
+anyone else's.
 
 The AI module reads `ANTHROPIC_API_KEY`; with it unset, `GYMFLOW_AI_ENABLED`
 effectively falls back to the statistical engine and the built-in program

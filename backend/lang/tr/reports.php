@@ -6,6 +6,11 @@
  */
 return [
 
+    'search' => 'Rapor ara…',
+    'no_match' => 'Eşleşen rapor yok.',
+    'days' => 'Gün',
+    'months' => 'Ay',
+
     'unknown' => 'Bu anahtara uyan rapor yok.',
 
     // group headings

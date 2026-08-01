@@ -83,7 +83,7 @@ class AuthController extends Controller
         $user = $query->where('email', $credentials['email'])->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
-            $this->auditor->log('auth.login_failed', $user, [], ['email' => $credentials['email']]);
+            $this->auditor->log('auth.login_failed', $user, [], ['email' => $credentials['email']], $user?->id);
 
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
@@ -91,7 +91,7 @@ class AuthController extends Controller
         }
 
         if ($user->status !== 'active') {
-            $this->auditor->log('auth.login_refused', $user, [], ['reason' => $user->status]);
+            $this->auditor->log('auth.login_refused', $user, [], ['reason' => $user->status], $user->id);
 
             throw ValidationException::withMessages([
                 'email' => __('auth.account_disabled'),
@@ -140,7 +140,7 @@ class AuthController extends Controller
             : $this->spendRecoveryCode($user, $data['recovery_code']);
 
         if (! $passed) {
-            $this->auditor->log('auth.two_factor_failed', $user);
+            $this->auditor->log('auth.two_factor_failed', $user, [], [], $user->id);
 
             throw ValidationException::withMessages(['code' => __('auth.two_factor_invalid')]);
         }
@@ -159,7 +159,7 @@ class AuthController extends Controller
         $this->auditor->log('auth.login', $user, [], [
             'guard' => 'staff',
             'two_factor' => (bool) $user->two_factor_enabled,
-        ]);
+        ], $user->id);
 
         return [
             'user' => $user,
@@ -198,7 +198,7 @@ class AuthController extends Controller
                 unset($codes[$index]);
 
                 $user->forceFill(['two_factor_recovery_codes' => array_values($codes)])->save();
-                $this->auditor->log('auth.two_factor_recovery_used', $user, [], ['codes_left' => count($codes)]);
+                $this->auditor->log('auth.two_factor_recovery_used', $user, [], ['codes_left' => count($codes)], $user->id);
 
                 return true;
             }
@@ -224,14 +224,14 @@ class AuthController extends Controller
             ->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
-            $this->auditor->log('auth.login_failed', $user, [], ['phone' => $credentials['phone']]);
+            $this->auditor->log('auth.login_failed', $user, [], ['phone' => $credentials['phone']], $user?->id);
 
             throw ValidationException::withMessages(['phone' => __('auth.failed')]);
         }
 
         $user->forceFill(['last_login_at' => now()])->save();
 
-        $this->auditor->log('auth.login', $user, [], ['guard' => 'member']);
+        $this->auditor->log('auth.login', $user, [], ['guard' => 'member'], $user->id);
 
         return response()->json([
             'user' => $user,

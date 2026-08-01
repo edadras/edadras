@@ -7,6 +7,10 @@
 return [
 
     'nav' => [
+        'crm' => 'Mesajlaşma',
+        'audit' => 'Denetim kaydı',
+        'security' => 'Güvenlik',
+        'templates' => 'Metinler',
         'more' => 'Daha fazla',
         'coaches' => 'Antrenörler',
         'chat' => 'Sohbet',
@@ -268,6 +272,49 @@ return [
         'member_empty' => 'Antrenörünüz henüz sohbet başlatmadı.',
         'say_hello' => 'Merhaba deyin.',
         'message' => 'Mesaj…',
+    ],
+
+    'audit' => [
+        'title' => 'Denetim kaydı',
+        'hint' => 'Üyeler, para, personel ve izinlerdeki her değişiklik ve bunu kimin yaptığı.',
+        'empty' => 'Bu dönemde kayıt yok.',
+        'when' => 'Zaman',
+        'who' => 'Kullanıcı',
+        'action' => 'İşlem',
+        'subject' => 'Kayıt',
+        'ip' => 'Adres',
+    ],
+
+    'security' => [
+        'two_factor' => 'İki adımlı giriş',
+        'two_factor_hint' => 'Telefonunuzdaki doğrulama uygulaması, şifrenizden sonra sorulan altı haneli bir kod üretir.',
+        'turn_on' => 'Aç',
+        'turn_off' => 'Kapat',
+        'confirm' => 'Onayla',
+        'code' => 'Uygulamadaki kod',
+        'manual_key' => 'Veya bu anahtarı girin',
+        'recovery_codes' => 'Kurtarma kodları',
+        'recovery_hint' => 'Bunları güvenli bir yerde saklayın. Telefonunuzu kaybederseniz her biri sizi bir kez içeri alır. Yalnızca şimdi gösterilir.',
+        'codes_left' => 'kurtarma kodu kaldı',
+        'codes_copied' => 'Kurtarma kodları kopyalandı.',
+        'new_codes' => 'Yeni kurtarma kodları oluştur',
+        'copy' => 'Kopyala',
+        'on_since' => 'Şu tarihten beri açık',
+        'advice' => 'Kulübü güvende tutmak',
+        'tip_roles' => 'Herkese işini yapmasına yeten en küçük rolü verin. Resepsiyonun muhasebeye ihtiyacı yok.',
+        'tip_audit' => 'Denetim kaydı; üyeler, para ve izinlerdeki her değişikliği kimin yaptığıyla birlikte tutar.',
+        'tip_backup' => 'Açıldığında yedekleme her gece çalışır ve eski arşivler otomatik temizlenir.',
+        'tip_leaver' => 'Biri ayrıldığında ortak giriş kullanmak yerine hesabını devre dışı bırakın.',
+    ],
+
+    'templates' => [
+        'title' => 'Metinler',
+        'hint' => 'Her kulübün başladığı metin. Bir satırı kendisi için değiştiren kulüp kendi sürümünü korur.',
+        'group' => 'Grup',
+        'edit' => 'Düzenle',
+        'reset' => 'Sıfırla',
+        'reset_done' => 'Varsayılan metne dönüldü.',
+        'clubs_overriding' => 'kulüp kendi sürümünü kullanıyor',
     ],
 
 ];

@@ -90,6 +90,8 @@ class AuditTrailTest extends ClubTestCase
         $this->assertDatabaseHas('audit_logs', [
             'action' => 'auth.login',
             'auditable_id' => $this->owner->id,
+            // There is no session yet at sign-in, but the actor is right there.
+            'user_id' => $this->owner->id,
         ]);
     }
 

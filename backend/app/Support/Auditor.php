@@ -55,8 +55,12 @@ class Auditor
     /**
      * Records one action. `$subject` is the row it happened to, when there is
      * one; `$old` and `$new` are already-redacted attribute maps.
+     *
+     * `$actor` names who did it when there is no signed in user to read —
+     * a sign-in is the obvious case: the session does not exist yet, but the
+     * person is right there in the subject.
      */
-    public function log(string $action, ?Model $subject = null, array $old = [], array $new = []): ?AuditLog
+    public function log(string $action, ?Model $subject = null, array $old = [], array $new = [], ?int $actor = null): ?AuditLog
     {
         if (! $this->enabled) {
             return null;
@@ -67,7 +71,7 @@ class Auditor
 
             return AuditLog::create([
                 'tenant_id' => $this->tenantIdFor($subject),
-                'user_id' => Auth::id(),
+                'user_id' => $actor ?? Auth::id(),
                 'action' => $action,
                 'auditable_type' => $subject ? $subject::class : null,
                 'auditable_id' => $subject?->getKey(),

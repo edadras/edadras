@@ -16,6 +16,8 @@ export const useAuthStore = defineStore('auth', {
     /** Mirrors the API's wildcard rules so the sidebar hides what it must. */
     can: (state) => (permission) => {
       if (!state.user) return false
+      // A screen with no permission of its own — Security is everyone's.
+      if (!permission) return true
       if (state.user.is_super_admin || state.permissions.includes('*')) return true
       if (state.permissions.includes(permission)) return true
 

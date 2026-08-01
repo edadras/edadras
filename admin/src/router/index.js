@@ -18,8 +18,12 @@ const routes = [
       { path: 'shop', name: 'shop', component: () => import('@/views/ShopView.vue'), meta: { permission: 'shop.view' } },
       { path: 'reports', name: 'reports', component: () => import('@/views/ReportsView.vue'), meta: { permission: 'reports.view' } },
       { path: 'ai', name: 'ai', component: () => import('@/views/AiView.vue'), meta: { permission: 'ai.view' } },
+      { path: 'crm', name: 'crm', component: () => import('@/views/CrmView.vue'), meta: { permission: 'crm.view' } },
+      { path: 'audit', name: 'audit', component: () => import('@/views/AuditView.vue'), meta: { permission: 'audit.view' } },
+      { path: 'security', name: 'security', component: () => import('@/views/SecurityView.vue') },
       { path: 'settings', name: 'settings', component: () => import('@/views/SettingsView.vue'), meta: { permission: 'settings.view' } },
       { path: 'platform', name: 'platform', component: () => import('@/views/PlatformView.vue'), meta: { superAdmin: true } },
+      { path: 'templates', name: 'templates', component: () => import('@/views/TemplatesView.vue'), meta: { superAdmin: true } },
     ],
   },
 

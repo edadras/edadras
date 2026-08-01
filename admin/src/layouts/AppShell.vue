@@ -19,7 +19,10 @@ const nav = computed(() =>
     { name: 'shop', label: ui.t('nav.shop', 'Shop'), icon: '🛍️', permission: 'shop.view' },
     { name: 'reports', label: ui.t('nav.reports', 'Reports'), icon: '📈', permission: 'reports.view' },
     { name: 'ai', label: ui.t('nav.ai', 'AI'), icon: '✨', permission: 'ai.view' },
+    { name: 'crm', label: ui.t('nav.crm', 'Messaging'), icon: '📣', permission: 'crm.view' },
+    { name: 'audit', label: ui.t('nav.audit', 'Audit trail'), icon: '🛡️', permission: 'audit.view' },
     { name: 'settings', label: ui.t('nav.settings', 'Settings'), icon: '⚙️', permission: 'settings.view' },
+    { name: 'security', label: ui.t('nav.security', 'Security'), icon: '🔐' },
   ].filter((item) => auth.can(item.permission)),
 )
 
@@ -76,6 +79,17 @@ async function signOut() {
         >
           <span class="text-base" aria-hidden="true">🛰️</span>
           {{ ui.t('nav.platform', 'Platform') }}
+        </RouterLink>
+
+        <RouterLink
+          v-if="auth.isSuperAdmin"
+          :to="{ name: 'templates' }"
+          class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-200 transition hover:bg-white/8 hover:text-white"
+          active-class="bg-brand/15 text-brand"
+          @click="sidebarOpen = false"
+        >
+          <span class="text-base" aria-hidden="true">🈯</span>
+          {{ ui.t('nav.templates', 'Wording') }}
         </RouterLink>
       </nav>
 

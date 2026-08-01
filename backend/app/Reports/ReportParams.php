@@ -21,8 +21,11 @@ final class ReportParams
     public static function fromRequest(Request $request): self
     {
         return new self(
-            from: $request->date('from') ?? today()->startOfMonth(),
-            to: $request->date('to') ?? today()->endOfDay(),
+            from: ($request->date('from') ?? today()->startOfMonth())->startOfDay(),
+            // A picker sends "to" as a bare date, which parses to midnight —
+            // so without this, choosing today excludes everything that
+            // happened today.
+            to: ($request->date('to') ?? today())->endOfDay(),
             days: max(1, min(730, $request->integer('days', 30))),
             months: max(1, min(60, $request->integer('months', 12))),
             date: $request->query('date'),

@@ -8,6 +8,10 @@
 return [
 
     'nav' => [
+        'crm' => 'Messaging',
+        'audit' => 'Audit trail',
+        'security' => 'Security',
+        'templates' => 'Wording',
         'more' => 'More',
         'coaches' => 'Coaches',
         'chat' => 'Chat',
@@ -269,6 +273,49 @@ return [
         'member_empty' => 'Your coach has not started a chat yet.',
         'say_hello' => 'Say hello.',
         'message' => 'Message…',
+    ],
+
+    'audit' => [
+        'title' => 'Audit trail',
+        'hint' => 'Every change to members, money, staff and permissions, and who made it.',
+        'empty' => 'Nothing recorded in this period.',
+        'when' => 'When',
+        'who' => 'Who',
+        'action' => 'Action',
+        'subject' => 'Record',
+        'ip' => 'Address',
+    ],
+
+    'security' => [
+        'two_factor' => 'Two factor sign-in',
+        'two_factor_hint' => 'An authenticator app on your phone generates a six digit code that is asked for after your password.',
+        'turn_on' => 'Turn it on',
+        'turn_off' => 'Turn it off',
+        'confirm' => 'Confirm',
+        'code' => 'Code from the app',
+        'manual_key' => 'Or type this key',
+        'recovery_codes' => 'Recovery codes',
+        'recovery_hint' => 'Save these somewhere safe. Each one signs you in once if you lose your phone. They are shown only now.',
+        'codes_left' => 'recovery codes left',
+        'codes_copied' => 'Recovery codes copied.',
+        'new_codes' => 'Issue new recovery codes',
+        'copy' => 'Copy',
+        'on_since' => 'On since',
+        'advice' => 'Keeping the club safe',
+        'tip_roles' => 'Give each person the smallest role that lets them do their job. Reception does not need the books.',
+        'tip_audit' => 'The audit trail records every change to members, money and permissions, with who made it.',
+        'tip_backup' => 'Backups run nightly once switched on, and old archives are pruned automatically.',
+        'tip_leaver' => 'When someone leaves, disable their account rather than sharing a login.',
+    ],
+
+    'templates' => [
+        'title' => 'Wording',
+        'hint' => 'The wording every club starts from. A club that rewrites a line for itself keeps its own version.',
+        'group' => 'Group',
+        'edit' => 'Edit',
+        'reset' => 'Reset',
+        'reset_done' => 'Back to the shipped wording.',
+        'clubs_overriding' => 'clubs use their own',
     ],
 
 ];

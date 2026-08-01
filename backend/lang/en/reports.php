@@ -6,6 +6,11 @@
  */
 return [
 
+    'search' => 'Search reports…',
+    'no_match' => 'No report matches that.',
+    'days' => 'Days',
+    'months' => 'Months',
+
     'unknown' => 'No report matches this key.',
 
     // group headings

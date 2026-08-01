@@ -30,7 +30,7 @@ final class Recipient
             name: $member->full_name,
             phone: $member->phone,
             email: $member->email ?: $user?->email,
-            telegramChatId: null,
+            telegramChatId: $member->telegram_chat_id,
             pushTokens: $user?->pushTokens->pluck('token')->all() ?? [],
             locale: $user?->locale ?? config('gymflow.default_locale'),
         );

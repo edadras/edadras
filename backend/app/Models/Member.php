@@ -21,7 +21,8 @@ class Member extends Model
         'tenant_id', 'user_id', 'code', 'first_name', 'last_name', 'national_id',
         'passport_no', 'phone', 'email', 'gender', 'birth_date', 'height', 'weight',
         'blood_type', 'diseases', 'allergies', 'notes', 'photo_path', 'qr_token',
-        'nfc_uid', 'emergency_name', 'emergency_phone', 'status', 'joined_at',
+        'nfc_uid', 'telegram_chat_id', 'emergency_name', 'emergency_phone',
+        'status', 'joined_at',
     ];
 
     /**
@@ -38,6 +39,13 @@ class Member extends Model
             'birth_date' => 'date',
             'joined_at' => 'date',
             'weight' => 'decimal:2',
+            // Health notes and travel documents are encrypted at rest: a
+            // stolen database dump should not read as a medical record.
+            // national_id stays in the clear on purpose — reception searches
+            // by it, and an encrypted column cannot be searched with LIKE.
+            'passport_no' => 'encrypted',
+            'diseases' => 'encrypted',
+            'allergies' => 'encrypted',
         ];
     }
 

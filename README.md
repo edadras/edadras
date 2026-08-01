@@ -95,8 +95,29 @@ and nothing leaves the building by accident. Bodies support `{name}`,
 renders one against a real member first. Above 25 recipients the send moves to
 a queued job that restores the campaign's club before it starts.
 
+### Printing in Persian
+
+DomPDF draws the code points it is handed, in the order it is handed them —
+no letter joining, no right-to-left reordering. A Persian invoice therefore
+came out as isolated letters running backwards.
+
+`app/Support/PersianShaper.php` fixes it: every letter is swapped for its
+contextual presentation form, lam-alef becomes its ligature, and the
+right-to-left runs are reversed while Latin text, prices and phone numbers
+keep their own order. The general-purpose Arabic libraries were tried first
+and left the six Persian-only letters — پ چ ژ ک گ ی — untouched, which is
+most of what an Iranian club's invoice is made of.
+
+DejaVu Sans, which DomPDF already ships, carries every presentation form
+needed. A club that wants its own typeface drops a TTF into `storage/fonts`
+and registers it in `config/dompdf.php`; the shaping still applies.
+
 ### Security
 
+- **Provider sign-in** with Google, Apple or GitHub. A provider account binds
+  to one user in one club and never crosses between them, and an identity on
+  its own never creates a staff account — it attaches to someone the club
+  already invited, or creates a member only where the club turned that on.
 - **Two factor** over TOTP, written against RFC 6238 and checked against the
   spec's own test vector. Enabling is two steps on purpose — a mis-scan must
   not lock an owner out of their own club. Recovery codes are shown once,
@@ -110,6 +131,9 @@ a queued job that restores the campaign's club before it starts.
   number of archives a club wants to keep. MySQL is dumped with the password
   in a 0600 credentials file rather than on a command line every user on the
   box can read.
+- **Health notes and passport numbers encrypted at rest**, so a stolen dump
+  does not read as a medical record. The national id stays in the clear on
+  purpose: reception searches by it, and an encrypted column cannot be.
 
 ### The AI module
 
@@ -164,7 +188,8 @@ php artisan schedule:work             # runs gymflow:maintenance nightly
 ```
 
 `gymflow:maintenance` expires what ran out, closes check-ins left open,
-sends renewal reminders and refreshes the AI insights, once per active club.
+sends renewal reminders, wishes anyone whose birthday it is, and refreshes
+the AI insights — once per active club.
 
 ### Admin panel
 
@@ -201,12 +226,14 @@ their phone number and password. Leave it out for a build that asks.
 cd backend && php artisan test
 ```
 
-183 feature tests covering tenant isolation, the check-in and quota engine,
+213 feature tests covering tenant isolation, the check-in and quota engine,
 booking capacity, membership lifecycle, invoicing and the cash box, the
 wallet, stock, permissions per role, the member app's endpoints, the AI
 engine, localisation, the audit trail, all 150 reports, campaign delivery
 across every channel, online payment including a gateway that says no, two
-factor sign-in, backups, coach rosters and the platform wording screen.
+factor sign-in, provider sign-in, backups, coach rosters, the platform
+wording screen, the nightly sweep, encryption at rest, and Persian shaping
+down to the individual presentation forms.
 
 ---
 
@@ -232,16 +259,14 @@ factor sign-in, backups, coach rosters and the platform wording screen.
   145 translation keys the apps ask for exist in all three languages. Expect
   to fix small things on the first `flutter pub get && flutter analyze`.
 
-### Still missing
+### Known limits
 
-Being straight about the gaps rather than leaving them to be discovered:
-
-- **OAuth / social sign-in.** The spec asks for it. Sign-in today is email or
-  phone plus password, with optional two factor. Nothing else is built.
-- **Invoice PDF fonts.** The PDF renders, but Persian needs the font drop
-  described below or the text comes out as boxes.
-- **Telegram chat ids.** The channel works, but nothing yet collects a
-  member's chat id, so in practice Telegram only reaches a broadcast chat.
+- **Provider sign-in is wired but unconfigured.** Google, Apple and GitHub go
+  through Socialite; a provider only appears once its credentials are in
+  `config/services.php`. Self signup stays off by default, so a provider
+  account alone cannot walk into a club that never invited it.
+- **Persian in PDFs is handled here, not by the font** — see below.
+- **Mobile builds** still need a first `flutter analyze`, as above.
 
 ---
 
@@ -262,6 +287,6 @@ The AI module reads `ANTHROPIC_API_KEY`; with it unset, `GYMFLOW_AI_ENABLED`
 effectively falls back to the statistical engine and the built-in program
 templates.
 
-Persian invoices need a font with Persian glyphs: drop a Vazirmatn TTF into
-`backend/storage/fonts` and register it in DomPDF's config. Without it the
-PDF renders, but Persian text comes out as boxes.
+Persian invoices work out of the box — see "Printing in Persian" above. A
+club that wants its own typeface drops a TTF into `backend/storage/fonts` and
+registers it in DomPDF's config.

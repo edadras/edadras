@@ -2,6 +2,15 @@
 
 return [
 
+    'provider_google' => 'Google',
+    'provider_apple' => 'Apple',
+    'provider_github' => 'GitHub',
+    'provider_unavailable' => 'That sign-in provider is not set up.',
+    'oauth_state_expired' => 'This sign-in took too long. Start again.',
+    'oauth_failed' => 'The provider did not confirm the sign-in.',
+    'oauth_no_account' => 'No account here matches that provider. Ask the club to invite you first.',
+    'oauth_already_linked' => 'That provider account belongs to someone else.',
+
     'two_factor_required' => 'Enter the code from your authenticator app.',
     'two_factor_invalid' => 'That code is not right.',
     'two_factor_expired' => 'This sign-in took too long. Start again.',

@@ -36,6 +36,23 @@ return new class extends Migration
             $table->unique(['tenant_id', 'email']);
         });
 
+        // One row per provider a user has connected. The unique pair means a
+        // Google account can only ever point at one user in one club.
+        Schema::create('social_accounts', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('tenant_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('provider');          // google, apple, github…
+            $table->string('provider_user_id');
+            $table->string('email')->nullable();
+            $table->string('name')->nullable();
+            $table->string('avatar')->nullable();
+            $table->timestamps();
+
+            $table->unique(['provider', 'provider_user_id']);
+            $table->index(['user_id', 'provider']);
+        });
+
         Schema::create('roles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tenant_id')->nullable()->constrained()->cascadeOnDelete();
@@ -74,6 +91,7 @@ return new class extends Migration
     {
         Schema::dropIfExists('push_tokens');
         Schema::dropIfExists('role_user');
+        Schema::dropIfExists('social_accounts');
         Schema::dropIfExists('roles');
 
         Schema::table('users', function (Blueprint $table) {

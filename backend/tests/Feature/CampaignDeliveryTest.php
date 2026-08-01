@@ -224,6 +224,56 @@ class CampaignDeliveryTest extends ClubTestCase
             ->assertJsonStructure(['placeholders']);
     }
 
+    public function test_telegram_reaches_a_member_who_connected_their_account(): void
+    {
+        Http::fake(['api.telegram.org/*' => Http::response(['result' => ['message_id' => 7]], 200)]);
+
+        Setting::create([
+            'tenant_id' => $this->club->id,
+            'key' => 'messaging.telegram',
+            'value' => ['token' => 'bot-token'],
+        ]);
+        app(ChannelManager::class)->flush();
+
+        $this->member('5010', ['telegram_chat_id' => '55501']);
+        $this->member('5011');
+
+        $response = $this->asUser()->withHeaders($this->clubHeaders())
+            ->postJson("/api/v1/campaigns/{$this->campaign('telegram')->id}/send")
+            ->assertOk();
+
+        // Only the one who started the bot is reachable; the other is skipped.
+        $this->assertSame(1, $response->json('delivered'));
+        $this->assertSame(1, $response->json('skipped'));
+
+        Http::assertSent(fn ($request) => $request['chat_id'] === '55501');
+    }
+
+    public function test_a_member_connects_their_telegram_from_the_app(): void
+    {
+        $member = $this->member('5012');
+
+        $user = \App\Models\User::create([
+            'tenant_id' => $this->club->id,
+            'name' => 'Telegram Member',
+            'email' => 'tg@test.club',
+            'phone' => $member->phone,
+            'password' => 'password',
+        ]);
+        $member->update(['user_id' => $user->id]);
+        $user->roles()->attach(
+            \App\Models\Role::where('tenant_id', $this->club->id)->where('slug', 'member')->value('id')
+        );
+
+        $this->actingAs($user->fresh('roles'), 'sanctum')
+            ->withHeaders($this->clubHeaders())
+            ->postJson('/api/v1/me/telegram', ['chat_id' => '99001'])
+            ->assertOk()
+            ->assertJsonPath('telegram_chat_id', '99001');
+
+        $this->assertSame('99001', $member->fresh()->telegram_chat_id);
+    }
+
     public function test_the_send_is_recorded_in_the_audit_trail(): void
     {
         $this->member('5009');

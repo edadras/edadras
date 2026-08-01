@@ -19,7 +19,9 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('last_name');
             $table->string('national_id')->nullable();
-            $table->string('passport_no')->nullable();
+            // Encrypted at rest, so the ciphertext needs the room a string
+            // column does not have.
+            $table->text('passport_no')->nullable();
             $table->string('phone');
             $table->string('email')->nullable();
             $table->string('gender')->nullable(); // male, female, other
@@ -33,6 +35,9 @@ return new class extends Migration
             $table->string('photo_path')->nullable();
             $table->string('qr_token', 64)->unique();
             $table->string('nfc_uid')->nullable();
+            // Set once the member starts the club's Telegram bot; without it
+            // the Telegram channel has no one to write to.
+            $table->string('telegram_chat_id')->nullable()->index();
             $table->string('emergency_name')->nullable();
             $table->string('emergency_phone')->nullable();
             $table->string('status')->default('active'); // active, inactive, blocked

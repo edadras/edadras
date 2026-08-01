@@ -53,6 +53,9 @@ return [
     'renewal' => [
         'remind_days_before' => [7, 3, 1],
         'remind_sessions_left' => [3, 1],
+        // A club can turn the birthday message off; the discount that rides
+        // with it is set per club under the `birthday.discount_percent` key.
+        'birthday_greetings' => (bool) env('GYMFLOW_BIRTHDAY_GREETINGS', true),
     ],
 
     /*
@@ -176,6 +179,20 @@ return [
         // Archives to keep before the oldest is pruned.
         'keep' => (int) env('GYMFLOW_BACKUP_KEEP', 14),
         'time' => env('GYMFLOW_BACKUP_TIME', '03:30'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Signing in with a provider
+    |--------------------------------------------------------------------------
+    | A provider only lists here once it has credentials in config/services.
+    | Self signup is off by default: a Google account on its own must not be
+    | able to walk into a club that never invited it.
+    */
+
+    'oauth' => [
+        'providers' => ['google', 'apple', 'github'],
+        'allow_self_signup' => (bool) env('GYMFLOW_OAUTH_SELF_SIGNUP', false),
     ],
 
 ];

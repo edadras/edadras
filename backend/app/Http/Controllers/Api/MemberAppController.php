@@ -205,6 +205,26 @@ class MemberAppController extends Controller
         return response()->json($member->fresh());
     }
 
+    /**
+     * Connects the member's Telegram, so the club's bot can reach them. The
+     * id comes from the bot's own /start handler, not from the member typing.
+     */
+    public function linkTelegram(Request $request): JsonResponse
+    {
+        $member = $this->member($request);
+
+        $data = $request->validate([
+            'chat_id' => ['nullable', 'string', 'max:64'],
+        ]);
+
+        $member->update(['telegram_chat_id' => $data['chat_id'] ?? null]);
+
+        return response()->json([
+            'telegram_chat_id' => $member->fresh()->telegram_chat_id,
+            'message' => __('general.saved'),
+        ]);
+    }
+
     /** Renewal reminders and anything else the club sent this member. */
     public function notifications(Request $request): JsonResponse
     {

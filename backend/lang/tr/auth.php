@@ -2,6 +2,15 @@
 
 return [
 
+    'provider_google' => 'Google',
+    'provider_apple' => 'Apple',
+    'provider_github' => 'GitHub',
+    'provider_unavailable' => 'Bu giriş yöntemi yapılandırılmadı.',
+    'oauth_state_expired' => 'Giriş çok uzun sürdü. Yeniden deneyin.',
+    'oauth_failed' => 'Sağlayıcı girişi onaylamadı.',
+    'oauth_no_account' => 'Bu sağlayıcıya bağlı hesap bulunamadı. Önce kulübün sizi eklemesini isteyin.',
+    'oauth_already_linked' => 'Bu sağlayıcı hesabı başka bir kullanıcıya ait.',
+
     'two_factor_required' => 'Doğrulama uygulamasındaki kodu girin.',
     'two_factor_invalid' => 'Bu kod doğru değil.',
     'two_factor_expired' => 'Giriş çok uzun sürdü. Yeniden deneyin.',

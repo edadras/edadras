@@ -2,6 +2,15 @@
 
 return [
 
+    'provider_google' => 'گوگل',
+    'provider_apple' => 'اپل',
+    'provider_github' => 'گیت‌هاب',
+    'provider_unavailable' => 'این روش ورود تنظیم نشده است.',
+    'oauth_state_expired' => 'زمان ورود تمام شد. دوباره تلاش کنید.',
+    'oauth_failed' => 'سرویس‌دهنده ورود را تأیید نکرد.',
+    'oauth_no_account' => 'حسابی با این سرویس اینجا پیدا نشد. ابتدا از باشگاه بخواهید شما را اضافه کند.',
+    'oauth_already_linked' => 'این حساب به کاربر دیگری متصل است.',
+
     'two_factor_required' => 'کد برنامه احرازهویت را وارد کنید.',
     'two_factor_invalid' => 'این کد درست نیست.',
     'two_factor_expired' => 'زمان ورود تمام شد. دوباره تلاش کنید.',

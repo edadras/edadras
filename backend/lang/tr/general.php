@@ -2,6 +2,10 @@
 
 return [
 
+    'birthday_title' => 'Doğum günün kutlu olsun!',
+    'birthday_body' => 'Doğum günün kutlu olsun :name. Kulüpteki herkes sana harika bir yıl diliyor.',
+    'birthday_body_gift' => 'Doğum günün kutlu olsun :name. Hediyemiz: sonraki yenilemende %:percent indirim.',
+
     'done' => 'Tamam',
 
     'online_topup' => 'Çevrimiçi yükleme',

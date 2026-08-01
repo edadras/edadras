@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\FinanceController;
 use App\Http\Controllers\Api\MemberAppController;
 use App\Http\Controllers\Api\MemberController;
 use App\Http\Controllers\Api\MembershipController;
+use App\Http\Controllers\Api\OAuthController;
 use App\Http\Controllers\Api\OnlinePaymentController;
 use App\Http\Controllers\Api\PlatformController;
 use App\Http\Controllers\Api\ProgramController;
@@ -38,6 +39,12 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/member-login', [AuthController::class, 'memberLogin']);
     Route::post('auth/two-factor/challenge', [AuthController::class, 'twoFactorChallenge']);
 
+    // Signing in with a provider. The browser has no token of ours yet, so
+    // the club travels in a signed state rather than the URL.
+    Route::get('auth/oauth', [OAuthController::class, 'providers']);
+    Route::get('auth/oauth/{provider}/redirect', [OAuthController::class, 'redirect'])->name('oauth.redirect');
+    Route::get('auth/oauth/{provider}/callback', [OAuthController::class, 'callback'])->name('oauth.callback');
+
     // The gateway redirects the payer here with no token of ours, so the club
     // comes from the URL and the payment from a token only we issued.
     Route::match(['get', 'post'], 'payments/callback/{tenant}/{token}', [OnlinePaymentController::class, 'callback'])
@@ -51,6 +58,10 @@ Route::prefix('v1')->group(function () {
         Route::post('auth/password', [AuthController::class, 'updatePassword']);
         Route::post('auth/push-tokens', [AuthController::class, 'registerPushToken']);
         Route::post('translations', [TranslationController::class, 'store']);
+
+        Route::get('auth/oauth/linked', [OAuthController::class, 'linked']);
+        Route::post('auth/oauth/{provider}/link', [OAuthController::class, 'link']);
+        Route::delete('auth/oauth/{provider}', [OAuthController::class, 'unlink']);
 
         Route::prefix('auth/two-factor')->group(function () {
             Route::get('/', [TwoFactorController::class, 'status']);
@@ -207,6 +218,7 @@ Route::prefix('v1')->group(function () {
             Route::get('programs', [MemberAppController::class, 'programs']);
             Route::get('measurements', [MemberAppController::class, 'measurements']);
             Route::put('profile', [MemberAppController::class, 'updateProfile']);
+            Route::post('telegram', [MemberAppController::class, 'linkTelegram']);
             Route::get('notifications', [MemberAppController::class, 'notifications']);
             Route::get('payment-gateway', [OnlinePaymentController::class, 'gateway']);
             Route::post('payments/start', [OnlinePaymentController::class, 'start']);

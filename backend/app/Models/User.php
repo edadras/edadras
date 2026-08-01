@@ -63,6 +63,11 @@ class User extends Authenticatable
         return $this->hasOne(Coach::class);
     }
 
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
+    }
+
     public function pushTokens(): HasMany
     {
         return $this->hasMany(PushToken::class);

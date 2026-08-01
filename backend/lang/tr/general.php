@@ -2,6 +2,8 @@
 
 return [
 
+    'done' => 'Tamam',
+
     'online_topup' => 'Çevrimiçi yükleme',
 
     'no_members' => 'Bu kulübün henüz üyesi yok.',

@@ -2,6 +2,8 @@
 
 return [
 
+    'done' => 'Done',
+
     'online_topup' => 'Online top-up',
 
     'no_members' => 'This club has no members yet.',

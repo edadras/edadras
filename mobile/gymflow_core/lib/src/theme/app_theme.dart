@@ -122,6 +122,15 @@ abstract final class AppTheme {
         space: 1,
         thickness: 1,
       ),
+      // Chips default to a light Material palette, which reads as a mistake
+      // against the dark glass, so they are dressed to match.
+      chipTheme: ChipThemeData(
+        backgroundColor: Colors.white.withValues(alpha: 0.06),
+        labelStyle: const TextStyle(color: ink200, fontSize: 13),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: ink700,
         contentTextStyle: const TextStyle(color: Colors.white),

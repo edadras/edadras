@@ -3,6 +3,14 @@
 /* Online checkout, as the member sees it. */
 return [
 
+    'pay_online' => 'Pay online',
+    'pay_now' => 'Pay now',
+    'pay' => 'Pay',
+    'top_up' => 'Tap to top up',
+    'opening' => 'Opening the gateway…',
+    'check_again' => 'Check again',
+    'via' => 'Through',
+
     'paid' => 'Payment received. Thank you.',
     'failed' => 'The payment did not go through.',
     'pending' => 'Waiting for the gateway.',

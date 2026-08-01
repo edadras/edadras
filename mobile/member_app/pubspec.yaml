@@ -14,6 +14,9 @@ dependencies:
     path: ../gymflow_core
   # The member's badge is drawn on the device, so it works with no signal.
   qr_flutter: ^4.1.0
+  # The gateway's page opens in the phone's own browser, so the club never
+  # sees a card number and the bank's own app can take over.
+  url_launcher: ^6.3.0
   intl: ^0.19.0
 
 dev_dependencies:

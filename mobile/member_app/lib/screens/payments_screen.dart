@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:gymflow_core/gymflow_core.dart';
 import 'package:intl/intl.dart';
 
+import 'checkout_screen.dart';
+
 /// What the member has paid, what they still owe, and their wallet credit.
 class PaymentsScreen extends StatefulWidget {
   const PaymentsScreen({super.key});
@@ -51,6 +53,15 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     }
   }
 
+  /// Opens checkout, and refreshes when it comes back settled.
+  Future<void> _checkout([Invoice? invoice]) async {
+    final paid = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => CheckoutScreen(invoice: invoice)),
+    );
+
+    if (paid == true && mounted) await _load();
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = TranslationsScope.of(context);
@@ -71,6 +82,8 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                     value: _balance,
                     icon: '👛',
                     money: true,
+                    hint: t.t('payments.top_up', 'Tap to top up'),
+                    onTap: () => _checkout(),
                   ),
 
                   const SizedBox(height: 16),
@@ -84,7 +97,10 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                         : Column(
                             children: [
                               for (final invoice in _invoices)
-                                _InvoiceRow(invoice: invoice),
+                                _InvoiceRow(
+                                  invoice: invoice,
+                                  onPay: invoice.isPaid ? null : () => _checkout(invoice),
+                                ),
                             ],
                           ),
                   ),
@@ -144,9 +160,10 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
 }
 
 class _InvoiceRow extends StatelessWidget {
-  const _InvoiceRow({required this.invoice});
+  const _InvoiceRow({required this.invoice, this.onPay});
 
   final Invoice invoice;
+  final VoidCallback? onPay;
 
   @override
   Widget build(BuildContext context) {
@@ -184,6 +201,19 @@ class _InvoiceRow extends StatelessWidget {
                 ),
             ],
           ),
+          if (onPay != null) ...[
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: onPay,
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.brand,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(t.t('payments.pay', 'Pay')),
+            ),
+          ],
         ],
       ),
     );

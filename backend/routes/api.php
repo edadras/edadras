@@ -59,6 +59,7 @@ Route::prefix('v1')->group(function () {
             Route::get('roles', [ClubController::class, 'roles']);
             Route::post('roles', [ClubController::class, 'storeRole']);
             Route::put('roles/{role}', [ClubController::class, 'updateRole']);
+            Route::get('audit-logs', [ClubController::class, 'auditLogs']);
         });
 
         // Members

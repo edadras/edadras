@@ -14,6 +14,7 @@ use App\Services\InvoiceService;
 use App\Services\MembershipService;
 use App\Services\TenantProvisioningService;
 use App\Tenancy\TenantContext;
+use App\Support\Auditor;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -27,6 +28,8 @@ class DemoClubSeeder extends Seeder
 {
     public function run(): void
     {
+        app(Auditor::class)->disable();
+
         $provisioning = app(TenantProvisioningService::class);
         $tenancy = app(TenantContext::class);
 

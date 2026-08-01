@@ -2,12 +2,16 @@
 
 namespace Database\Seeders;
 
+use App\Support\Auditor;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Seeded rows have no author, so there is nothing worth auditing.
+        app(Auditor::class)->disable();
+
         $this->call([
             PlanSeeder::class,
             ExerciseSeeder::class,

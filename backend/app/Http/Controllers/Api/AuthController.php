@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\TenantProvisioningService;
+use App\Support\Auditor;
 use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,6 +19,7 @@ class AuthController extends Controller
     public function __construct(
         private readonly TenantProvisioningService $provisioning,
         private readonly TenantContext $tenancy,
+        private readonly Auditor $auditor,
     ) {}
 
     /**
@@ -77,18 +79,24 @@ class AuthController extends Controller
         $user = $query->where('email', $credentials['email'])->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+            $this->auditor->log('auth.login_failed', $user, [], ['email' => $credentials['email']]);
+
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
         }
 
         if ($user->status !== 'active') {
+            $this->auditor->log('auth.login_refused', $user, [], ['reason' => $user->status]);
+
             throw ValidationException::withMessages([
                 'email' => __('auth.account_disabled'),
             ]);
         }
 
         $user->forceFill(['last_login_at' => now()])->save();
+
+        $this->auditor->log('auth.login', $user, [], ['guard' => 'staff']);
 
         return response()->json([
             'user' => $user,
@@ -115,8 +123,14 @@ class AuthController extends Controller
             ->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+            $this->auditor->log('auth.login_failed', $user, [], ['phone' => $credentials['phone']]);
+
             throw ValidationException::withMessages(['phone' => __('auth.failed')]);
         }
+
+        $user->forceFill(['last_login_at' => now()])->save();
+
+        $this->auditor->log('auth.login', $user, [], ['guard' => 'member']);
 
         return response()->json([
             'user' => $user,
@@ -141,6 +155,8 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()?->delete();
 
+        $this->auditor->log('auth.logout', $request->user());
+
         return response()->json(['message' => __('auth.logged_out')]);
     }
 
@@ -161,6 +177,8 @@ class AuthController extends Controller
 
         // A password change should not leave old phones signed in.
         $user->tokens()->delete();
+
+        $this->auditor->log('auth.password_changed', $user);
 
         return response()->json([
             'message' => __('auth.password_updated'),

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsAudit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TenantSubscription extends Model
 {
-    use HasFactory;
+    use HasFactory, RecordsAudit;
 
     protected $fillable = [
         'tenant_id', 'plan_id', 'starts_at', 'ends_at', 'price', 'status',

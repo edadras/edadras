@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasTranslations;
+use App\Models\Concerns\RecordsAudit;
 use App\Tenancy\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class MembershipPlan extends Model
 {
-    use BelongsToTenant, HasFactory, HasTranslations;
+    use BelongsToTenant, HasFactory, HasTranslations, RecordsAudit;
 
     public const TYPE_DURATION = 'duration';
 

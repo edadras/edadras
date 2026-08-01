@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\Tenant;
@@ -214,6 +215,26 @@ class ClubController extends Controller
         ]));
 
         return response()->json($role->fresh());
+    }
+
+    /**
+     * The club's own trail: who changed what, inside this club only. The
+     * platform panel has a wider view across every club.
+     */
+    public function auditLogs(Request $request): JsonResponse
+    {
+        $this->authorize('audit.view');
+
+        return response()->json(
+            AuditLog::where('tenant_id', $this->tenancy->id())
+                ->when($request->query('action'), fn ($q, $action) => $q->where('action', 'like', $action.'%'))
+                ->when($request->query('user_id'), fn ($q, $id) => $q->where('user_id', $id))
+                ->when($request->date('from'), fn ($q, $from) => $q->where('created_at', '>=', $from))
+                ->when($request->date('to'), fn ($q, $to) => $q->where('created_at', '<=', $to))
+                ->with('user:id,name')
+                ->latest()
+                ->paginate($request->integer('per_page', 50))
+        );
     }
 
     /** Role ids are validated to exist, then narrowed to this club's own. */

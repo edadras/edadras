@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Role;
 use App\Services\Ai\ClaudeClient;
 use App\Services\DatabaseTranslationLoader;
+use App\Support\Auditor;
 use App\Support\Permissions;
 use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Gate;
@@ -15,6 +16,7 @@ class GymFlowServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(TenantContext::class);
+        $this->app->singleton(Auditor::class);
 
         $this->app->singleton(ClaudeClient::class, fn ($app) => new ClaudeClient(
             $app['config']->get('gymflow.ai', []),

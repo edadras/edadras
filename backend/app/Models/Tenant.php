@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsAudit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Tenant extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, RecordsAudit, SoftDeletes;
 
     public const TYPES = [
         'gym', 'pool', 'martial_arts', 'yoga', 'pilates', 'crossfit', 'football', 'multi',

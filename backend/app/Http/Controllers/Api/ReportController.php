@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Reports\ReportParams;
+use App\Reports\ReportRegistry;
 use App\Services\MembershipService;
 use App\Services\ReportService;
 use Illuminate\Http\JsonResponse;
@@ -14,6 +16,7 @@ class ReportController extends Controller
 {
     public function __construct(
         private readonly ReportService $reports,
+        private readonly ReportRegistry $registry,
         private readonly MembershipService $memberships,
     ) {}
 
@@ -28,16 +31,21 @@ class ReportController extends Controller
         return response()->json($this->reports->dashboard());
     }
 
-    /** Everything the reports screen can offer. */
+    /** Everything the reports screen can offer, grouped for the sidebar. */
     public function catalogue(): JsonResponse
     {
         $this->authorize('reports.view');
 
-        return response()->json(
-            collect($this->reports->catalogue())
-                ->map(fn (array $report) => $report + ['label' => __("reports.{$report['key']}")])
-                ->all()
-        );
+        $reports = collect($this->registry->catalogue())
+            ->map(fn (array $report) => $report + ['label' => __("reports.{$report['key']}")]);
+
+        return response()->json([
+            'reports' => $reports->values()->all(),
+            'groups' => collect($this->registry->groups())
+                ->map(fn (string $group) => ['key' => $group, 'label' => __("reports.group_{$group}")])
+                ->all(),
+            'total' => $reports->count(),
+        ]);
     }
 
     /** Runs one report by key, with the period the screen selected. */
@@ -45,37 +53,13 @@ class ReportController extends Controller
     {
         $this->authorize('reports.view');
 
-        $from = $request->date('from') ?? today()->startOfMonth();
-        $to = $request->date('to') ?? today()->endOfDay();
-        $days = $request->integer('days', 30);
-
-        $data = match ($key) {
-            'dashboard' => $this->reports->dashboard(),
-            'daily_register' => $this->reports->dailyRegister($request->query('date')),
-            'profit_and_loss' => $this->reports->profitAndLoss($from, $to),
-            'revenue_by_category' => $this->reports->revenueByCategory($from, $to),
-            'revenue_by_method' => $this->reports->revenueByMethod($from, $to),
-            'expense_by_category' => $this->reports->expenseByCategory($from, $to),
-            'revenue_series' => $this->reports->revenueSeries($days),
-            'product_sales' => $this->reports->productSales($from, $to),
-            'low_stock' => $this->reports->lowStockProducts(),
-            'inactive_members' => $this->reports->inactiveMembers($days),
-            'expiring_memberships' => $this->reports->expiringMemberships($request->integer('days', 7)),
-            'top_members_by_attendance' => $this->reports->topMembersByAttendance($days),
-            'membership_mix' => $this->reports->membershipMix(),
-            'gender_split' => $this->reports->genderSplit(),
-            'attendance_series' => $this->reports->attendanceSeries($days),
-            'attendance_by_hour' => $this->reports->attendanceByHour($days),
-            'coach_performance' => $this->reports->coachPerformance($from, $to),
-            'class_occupancy' => $this->reports->classOccupancy($from, $to),
-            default => abort(404, __('reports.unknown')),
-        };
+        $params = ReportParams::fromRequest($request);
 
         return response()->json([
             'key' => $key,
             'label' => __("reports.{$key}"),
-            'period' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
-            'data' => $data,
+            'period' => ['from' => $params->from->toDateString(), 'to' => $params->to->toDateString()],
+            'data' => $this->registry->run($key, $params),
         ]);
     }
 
@@ -84,8 +68,7 @@ class ReportController extends Controller
     {
         $this->authorize('reports.export');
 
-        $payload = $this->show($request, $key)->getData(true)['data'];
-        $rows = $this->flatten($payload);
+        $rows = $this->flatten($this->registry->run($key, ReportParams::fromRequest($request)));
 
         if ($rows === []) {
             return response('', 204);
@@ -107,6 +90,10 @@ class ReportController extends Controller
     /** @return array<int, array<string, mixed>> */
     protected function flatten(mixed $payload): array
     {
+        if ($payload instanceof \Illuminate\Support\Collection) {
+            $payload = $payload->all();
+        }
+
         if (! is_array($payload)) {
             return [];
         }
@@ -118,7 +105,7 @@ class ReportController extends Controller
                 ->all();
         }
 
-        $firstList = collect($payload)->first(fn ($value) => is_array($value) && array_is_list($value));
+        $firstList = collect($payload)->first(fn ($value) => is_array($value) && array_is_list($value) && $value !== []);
 
         if ($firstList) {
             return collect($firstList)->map(fn ($row) => is_array($row) ? $row : ['value' => $row])->all();

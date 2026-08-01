@@ -35,6 +35,7 @@ class Permissions
             'finance.close_register',
             'reports.export',
             'ai.assistant',
+            'audit.view',
         ]);
     }
 
@@ -55,6 +56,7 @@ class Permissions
                     'classes.*', 'bookings.*', 'workouts.*', 'nutrition.*', 'measurements.*',
                     'finance.*', 'invoices.*', 'payments.*', 'wallet.*', 'shop.*', 'inventory.*',
                     'reports.*', 'accounting.*', 'crm.*', 'staff.*', 'settings.*', 'ai.*', 'chat.*',
+                    'audit.view',
                 ],
             ],
             'reception' => [

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsAudit;
 use App\Tenancy\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /** Shop item: supplements, clothing, drinks, equipment. */
 class Product extends Model
 {
-    use BelongsToTenant, HasFactory, SoftDeletes;
+    use BelongsToTenant, HasFactory, RecordsAudit, SoftDeletes;
 
     protected $fillable = [
         'tenant_id', 'name', 'sku', 'category', 'description', 'price', 'cost',

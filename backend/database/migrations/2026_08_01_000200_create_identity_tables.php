@@ -20,6 +20,9 @@ return new class extends Migration
             $table->string('status')->default('active')->after('is_super_admin');
             $table->string('two_factor_secret')->nullable()->after('status');
             $table->boolean('two_factor_enabled')->default(false)->after('two_factor_secret');
+            // Hashed, one use each, for the day the phone is lost.
+            $table->text('two_factor_recovery_codes')->nullable()->after('two_factor_enabled');
+            $table->timestamp('two_factor_confirmed_at')->nullable()->after('two_factor_recovery_codes');
             $table->timestamp('last_login_at')->nullable()->after('two_factor_enabled');
             $table->softDeletes();
 
@@ -78,7 +81,8 @@ return new class extends Migration
             $table->dropConstrainedForeignId('tenant_id');
             $table->dropColumn([
                 'phone', 'avatar_path', 'locale', 'is_super_admin', 'status',
-                'two_factor_secret', 'two_factor_enabled', 'last_login_at', 'deleted_at',
+                'two_factor_secret', 'two_factor_enabled', 'two_factor_recovery_codes',
+                'two_factor_confirmed_at', 'last_login_at', 'deleted_at',
             ]);
             $table->unique('email');
         });

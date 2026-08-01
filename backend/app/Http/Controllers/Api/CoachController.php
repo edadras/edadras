@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ClassBooking;
 use App\Models\Coach;
+use App\Models\Member;
 use App\Models\Transaction;
 use App\Services\ReportService;
 use Illuminate\Http\JsonResponse;
@@ -69,6 +71,55 @@ class CoachController extends Controller
     }
 
     /** Records a salary or commission payment as a cash box expense. */
+    /**
+     * The members this coach is responsible for: everyone with an active
+     * programme they wrote, plus anyone booked onto one of their sessions.
+     */
+    public function students(Request $request, Coach $coach): JsonResponse
+    {
+        $this->authorize('coaches.view');
+
+        $fromPlans = Member::where(fn ($q) => $q
+            ->whereHas('workoutPlans', fn ($p) => $p->where('coach_id', $coach->id)->where('status', 'active'))
+            ->orWhereHas('nutritionPlans', fn ($p) => $p->where('coach_id', $coach->id)->where('status', 'active')))
+            ->pluck('id');
+
+        $fromClasses = ClassBooking::where('status', '!=', 'cancelled')
+            ->whereHas('session', fn ($q) => $q
+                ->where('coach_id', $coach->id)
+                ->where('starts_at', '>=', now()->subDays($request->integer('days', 60))))
+            ->pluck('member_id');
+
+        $students = Member::whereIn('id', $fromPlans->merge($fromClasses)->unique())
+            ->with('activeMembership.plan:id,name')
+            ->withCount([
+                'attendances' => fn ($q) => $q->where('checked_in_at', '>=', now()->subDays(30)),
+            ])
+            ->orderBy('last_name')
+            ->get()
+            ->map(fn (Member $member) => [
+                'id' => $member->id,
+                'code' => $member->code,
+                'name' => $member->full_name,
+                'phone' => $member->phone,
+                'photo_path' => $member->photo_path,
+                'plan' => $member->activeMembership?->plan?->name,
+                'expires_at' => $member->activeMembership?->ends_at?->toDateString(),
+                'visits_last_30_days' => $member->attendances_count,
+                'source' => match (true) {
+                    $fromPlans->contains($member->id) && $fromClasses->contains($member->id) => 'both',
+                    $fromPlans->contains($member->id) => 'program',
+                    default => 'class',
+                },
+            ]);
+
+        return response()->json([
+            'coach' => $coach->only(['id', 'first_name', 'last_name', 'photo_path']),
+            'total' => $students->count(),
+            'students' => $students->values(),
+        ]);
+    }
+
     public function paySalary(Request $request, Coach $coach): JsonResponse
     {
         $this->authorize('accounting.create');

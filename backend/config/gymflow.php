@@ -160,4 +160,22 @@ return [
 
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Backups
+    |--------------------------------------------------------------------------
+    | The nightly archive of the database and everything uploaded. Off by
+    | default so a fresh install does not start writing archives nobody asked
+    | for; the schedule below only runs when it is switched on.
+    */
+
+    'backup' => [
+        'enabled' => (bool) env('GYMFLOW_BACKUP_ENABLED', false),
+        'disk' => env('GYMFLOW_BACKUP_DISK', 'local'),
+        'path' => env('GYMFLOW_BACKUP_PATH', 'backups'),
+        // Archives to keep before the oldest is pruned.
+        'keep' => (int) env('GYMFLOW_BACKUP_KEEP', 14),
+        'time' => env('GYMFLOW_BACKUP_TIME', '03:30'),
+    ],
+
 ];

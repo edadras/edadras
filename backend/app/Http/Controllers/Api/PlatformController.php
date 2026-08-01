@@ -9,11 +9,14 @@ use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\TenantSubscription;
 use App\Models\Transaction;
+use App\Models\Translation;
 use App\Models\User;
+use App\Services\DatabaseTranslationLoader;
 use App\Services\TenantProvisioningService;
 use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -157,6 +160,124 @@ class PlatformController extends Controller
         ]));
 
         return response()->json($plan->fresh());
+    }
+
+    /**
+     * The string templates every club inherits. A row with no tenant is the
+     * platform default; a club that overrides one gets its own row underneath,
+     * which is what makes "Members" read as "اعضا" in one club and something
+     * the owner prefers in another.
+     */
+    public function templates(Request $request): JsonResponse
+    {
+        $locale = $request->query('locale', config('gymflow.default_locale'));
+
+        abort_unless(array_key_exists($locale, config('gymflow.locales')), 404);
+
+        $group = $request->query('group');
+        $groups = $this->translatableGroups();
+
+        abort_if($group && ! in_array($group, $groups, true), 404);
+
+        $overrides = Translation::whereNull('tenant_id')
+            ->where('locale', $locale)
+            ->when($group, fn ($q) => $q->where('group', $group))
+            ->get()
+            ->keyBy(fn (Translation $row) => $row->group.'.'.$row->key);
+
+        $perTenant = Translation::whereNotNull('tenant_id')
+            ->where('locale', $locale)
+            ->when($group, fn ($q) => $q->where('group', $group))
+            ->get()
+            ->groupBy(fn (Translation $row) => $row->group.'.'.$row->key)
+            ->map->count();
+
+        $lines = collect($group ? [$group] : $groups)
+            ->flatMap(function (string $name) use ($locale, $overrides, $perTenant) {
+                $file = trans($name, [], $locale);
+
+                return collect(is_array($file) ? Arr::dot($file) : [])
+                    ->map(function ($value, string $key) use ($name, $overrides, $perTenant) {
+                        $path = $name.'.'.$key;
+
+                        return [
+                            'group' => $name,
+                            'key' => $key,
+                            'value' => (string) $value,
+                            'overridden' => $overrides->has($path),
+                            'clubs_overriding' => (int) ($perTenant[$path] ?? 0),
+                        ];
+                    })
+                    ->values();
+            });
+
+        return response()->json([
+            'locale' => $locale,
+            'direction' => config("gymflow.locales.{$locale}.dir"),
+            'groups' => $groups,
+            'total' => $lines->count(),
+            'lines' => $lines->when(
+                $search = $request->query('search'),
+                fn ($rows) => $rows->filter(fn (array $row) => str_contains(mb_strtolower($row['key'].' '.$row['value']), mb_strtolower($search)))
+            )->values(),
+        ]);
+    }
+
+    /** Rewrites a platform default. Clubs that overrode it keep their own. */
+    public function updateTemplate(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'locale' => ['required', Rule::in(array_keys(config('gymflow.locales')))],
+            'group' => ['required', Rule::in($this->translatableGroups())],
+            'key' => ['required', 'string', 'max:190'],
+            'value' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $template = Translation::updateOrCreate(
+            ['tenant_id' => null, 'locale' => $data['locale'], 'group' => $data['group'], 'key' => $data['key']],
+            ['value' => $data['value']],
+        );
+
+        DatabaseTranslationLoader::flush();
+
+        return response()->json($template, $template->wasRecentlyCreated ? 201 : 200);
+    }
+
+    /** Drops the override so the string falls back to what ships in the code. */
+    public function resetTemplate(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'locale' => ['required', Rule::in(array_keys(config('gymflow.locales')))],
+            'group' => ['required', 'string', 'max:60'],
+            'key' => ['required', 'string', 'max:190'],
+        ]);
+
+        Translation::whereNull('tenant_id')
+            ->where($data)
+            ->delete();
+
+        DatabaseTranslationLoader::flush();
+
+        return response()->json(['message' => __('general.deleted')]);
+    }
+
+    /** How much of the platform's wording each club has rewritten. */
+    public function templateOverrides(Request $request): JsonResponse
+    {
+        return response()->json(
+            Translation::whereNotNull('tenant_id')
+                ->when($request->query('tenant_id'), fn ($q, $id) => $q->where('tenant_id', $id))
+                ->when($request->query('locale'), fn ($q, $l) => $q->where('locale', $l))
+                ->with('tenant:id,name,slug')
+                ->latest('updated_at')
+                ->paginate($request->integer('per_page', 50))
+        );
+    }
+
+    /** @return array<int, string> */
+    protected function translatableGroups(): array
+    {
+        return ['general', 'checkin', 'booking', 'auth', 'ai', 'reports', 'panel', 'crm', 'payments'];
     }
 
     public function auditLogs(Request $request): JsonResponse

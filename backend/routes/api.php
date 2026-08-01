@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ShopController;
 use App\Http\Controllers\Api\TranslationController;
+use App\Http\Controllers\Api\TwoFactorController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -35,6 +36,7 @@ Route::prefix('v1')->group(function () {
     Route::post('clubs/register', [AuthController::class, 'registerClub']);
     Route::post('auth/login', [AuthController::class, 'login']);
     Route::post('auth/member-login', [AuthController::class, 'memberLogin']);
+    Route::post('auth/two-factor/challenge', [AuthController::class, 'twoFactorChallenge']);
 
     // The gateway redirects the payer here with no token of ours, so the club
     // comes from the URL and the payment from a token only we issued.
@@ -49,6 +51,14 @@ Route::prefix('v1')->group(function () {
         Route::post('auth/password', [AuthController::class, 'updatePassword']);
         Route::post('auth/push-tokens', [AuthController::class, 'registerPushToken']);
         Route::post('translations', [TranslationController::class, 'store']);
+
+        Route::prefix('auth/two-factor')->group(function () {
+            Route::get('/', [TwoFactorController::class, 'status']);
+            Route::post('/', [TwoFactorController::class, 'enable']);
+            Route::post('confirm', [TwoFactorController::class, 'confirm']);
+            Route::post('recovery-codes', [TwoFactorController::class, 'regenerateRecoveryCodes']);
+            Route::delete('/', [TwoFactorController::class, 'disable']);
+        });
 
         // ------------------------------------------------------- manager app
         Route::get('dashboard', [ReportController::class, 'dashboard']);
@@ -107,6 +117,7 @@ Route::prefix('v1')->group(function () {
 
         // Coaches
         Route::get('coaches-performance', [CoachController::class, 'performance']);
+        Route::get('coaches/{coach}/students', [CoachController::class, 'students']);
         Route::post('coaches/{coach}/salary', [CoachController::class, 'paySalary']);
         Route::apiResource('coaches', CoachController::class);
 
@@ -213,6 +224,10 @@ Route::prefix('v1')->group(function () {
             Route::get('plans', [PlatformController::class, 'plans']);
             Route::post('plans', [PlatformController::class, 'storePlan']);
             Route::put('plans/{plan}', [PlatformController::class, 'updatePlan']);
+            Route::get('templates', [PlatformController::class, 'templates']);
+            Route::put('templates', [PlatformController::class, 'updateTemplate']);
+            Route::delete('templates', [PlatformController::class, 'resetTemplate']);
+            Route::get('template-overrides', [PlatformController::class, 'templateOverrides']);
             Route::get('audit-logs', [PlatformController::class, 'auditLogs']);
         });
     });

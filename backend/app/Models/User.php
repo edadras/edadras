@@ -23,10 +23,11 @@ class User extends Authenticatable
 
     protected $fillable = [
         'tenant_id', 'name', 'email', 'phone', 'password', 'avatar_path',
-        'locale', 'is_super_admin', 'status', 'two_factor_enabled', 'last_login_at',
+        'locale', 'is_super_admin', 'status', 'two_factor_enabled',
+        'two_factor_confirmed_at', 'last_login_at',
     ];
 
-    protected $hidden = ['password', 'remember_token', 'two_factor_secret'];
+    protected $hidden = ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'];
 
     protected function casts(): array
     {
@@ -36,6 +37,9 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_super_admin' => 'boolean',
             'two_factor_enabled' => 'boolean',
+            'two_factor_confirmed_at' => 'datetime',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
         ];
     }
 

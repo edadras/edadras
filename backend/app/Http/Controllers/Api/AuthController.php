@@ -7,10 +7,13 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\TenantProvisioningService;
 use App\Support\Auditor;
+use App\Support\TwoFactor;
 use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -20,6 +23,7 @@ class AuthController extends Controller
         private readonly TenantProvisioningService $provisioning,
         private readonly TenantContext $tenancy,
         private readonly Auditor $auditor,
+        private readonly TwoFactor $totp,
     ) {}
 
     /**
@@ -94,16 +98,113 @@ class AuthController extends Controller
             ]);
         }
 
+        // With a second factor on, the password alone earns a challenge, not
+        // a token. Nothing is signed in until the code comes back.
+        if ($user->two_factor_enabled) {
+            return response()->json([
+                'two_factor_required' => true,
+                'challenge' => $this->issueChallenge($user, $credentials['device_name'] ?? 'api'),
+                'message' => __('auth.two_factor_required'),
+            ], 202);
+        }
+
+        return response()->json($this->grant($user, $credentials['device_name'] ?? 'api'));
+    }
+
+    /**
+     * The second step: a TOTP code, or one of the recovery codes for the day
+     * the phone is gone. A recovery code is spent the moment it is used.
+     */
+    public function twoFactorChallenge(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'challenge' => ['required', 'string'],
+            'code' => ['required_without:recovery_code', 'nullable', 'string'],
+            'recovery_code' => ['required_without:code', 'nullable', 'string'],
+        ]);
+
+        $pending = Cache::get($this->challengeKey($data['challenge']));
+
+        if (! $pending) {
+            throw ValidationException::withMessages(['challenge' => __('auth.two_factor_expired')]);
+        }
+
+        $user = User::withoutGlobalScopes()->find($pending['user_id']);
+
+        if (! $user || ! $user->two_factor_enabled) {
+            throw ValidationException::withMessages(['challenge' => __('auth.two_factor_expired')]);
+        }
+
+        $passed = filled($data['code'] ?? null)
+            ? $this->totp->verify($user->two_factor_secret, $data['code'])
+            : $this->spendRecoveryCode($user, $data['recovery_code']);
+
+        if (! $passed) {
+            $this->auditor->log('auth.two_factor_failed', $user);
+
+            throw ValidationException::withMessages(['code' => __('auth.two_factor_invalid')]);
+        }
+
+        // One challenge, one sign-in.
+        Cache::forget($this->challengeKey($data['challenge']));
+
+        return response()->json($this->grant($user, $pending['device_name']));
+    }
+
+    /** Everything a signed in client needs, and the token to do it with. */
+    protected function grant(User $user, string $deviceName): array
+    {
         $user->forceFill(['last_login_at' => now()])->save();
 
-        $this->auditor->log('auth.login', $user, [], ['guard' => 'staff']);
+        $this->auditor->log('auth.login', $user, [], [
+            'guard' => 'staff',
+            'two_factor' => (bool) $user->two_factor_enabled,
+        ]);
 
-        return response()->json([
+        return [
             'user' => $user,
             'permissions' => $user->permissions(),
             'club' => $user->tenant,
-            'token' => $user->createToken($credentials['device_name'] ?? 'api')->plainTextToken,
-        ]);
+            'token' => $user->createToken($deviceName)->plainTextToken,
+        ];
+    }
+
+    /** A five minute handle on a half-finished sign-in. */
+    protected function issueChallenge(User $user, string $deviceName): string
+    {
+        $challenge = Str::random(48);
+
+        Cache::put(
+            $this->challengeKey($challenge),
+            ['user_id' => $user->id, 'device_name' => $deviceName],
+            now()->addMinutes(5),
+        );
+
+        return $challenge;
+    }
+
+    protected function challengeKey(string $challenge): string
+    {
+        return 'two-factor:'.hash('sha256', $challenge);
+    }
+
+    /** Checks a recovery code and burns it, so it works exactly once. */
+    protected function spendRecoveryCode(User $user, ?string $candidate): bool
+    {
+        $codes = $user->two_factor_recovery_codes ?? [];
+
+        foreach ($codes as $index => $hash) {
+            if (Hash::check((string) $candidate, $hash)) {
+                unset($codes[$index]);
+
+                $user->forceFill(['two_factor_recovery_codes' => array_values($codes)])->save();
+                $this->auditor->log('auth.two_factor_recovery_used', $user, [], ['codes_left' => count($codes)]);
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Member login for the member app, by phone plus password. */

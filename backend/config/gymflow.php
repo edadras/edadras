@@ -71,4 +71,62 @@ return [
         'effort' => env('ANTHROPIC_EFFORT', 'medium'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Messaging
+    |--------------------------------------------------------------------------
+    | Every channel falls back to the log driver until it is configured, so a
+    | campaign always runs end to end and nothing leaves the building by
+    | accident. A club can override any of these from its own settings under
+    | the `messaging.<channel>` key, which is how one gym brings its own SMS
+    | gateway without touching anyone else's.
+    */
+
+    'messaging' => [
+
+        // Above this many recipients the send goes to the queue.
+        'queue_above' => (int) env('GYMFLOW_CAMPAIGN_QUEUE_ABOVE', 25),
+
+        'log_channel' => env('GYMFLOW_MESSAGING_LOG', 'stack'),
+
+        'channels' => [
+
+            'sms' => [
+                'url' => env('SMS_URL'),
+                'token' => env('SMS_TOKEN'),
+                'sender' => env('SMS_SENDER'),
+                'to_field' => env('SMS_TO_FIELD', 'to'),
+                'text_field' => env('SMS_TEXT_FIELD', 'text'),
+                'from_field' => env('SMS_FROM_FIELD', 'from'),
+                'reference_path' => env('SMS_REFERENCE_PATH', 'messageId'),
+            ],
+
+            'whatsapp' => [
+                'token' => env('WHATSAPP_TOKEN'),
+                'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+                'api_version' => env('WHATSAPP_API_VERSION', 'v21.0'),
+                'template' => env('WHATSAPP_TEMPLATE'),
+                'template_language' => env('WHATSAPP_TEMPLATE_LANGUAGE'),
+            ],
+
+            'telegram' => [
+                'token' => env('TELEGRAM_BOT_TOKEN'),
+                'broadcast_chat_id' => env('TELEGRAM_CHAT_ID'),
+                'parse_mode' => env('TELEGRAM_PARSE_MODE', 'HTML'),
+            ],
+
+            'email' => [
+                'from_name' => env('MAIL_FROM_NAME'),
+            ],
+
+            'push' => [
+                // Either the service account JSON itself or a path to it.
+                'credentials' => env('FCM_CREDENTIALS'),
+                'project_id' => env('FCM_PROJECT_ID'),
+            ],
+
+        ],
+
+    ],
+
 ];

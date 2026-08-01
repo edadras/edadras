@@ -3,18 +3,42 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendCampaign;
+use App\Messaging\ChannelManager;
 use App\Models\Campaign;
 use App\Models\Conversation;
 use App\Models\Member;
+use App\Services\CampaignDispatcher;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 /** Bulk messaging plus the member ↔ coach chat. */
 class CrmController extends Controller
 {
+    public function __construct(
+        private readonly CampaignDispatcher $dispatcher,
+        private readonly ChannelManager $channels,
+    ) {}
+
+    /** Which channels this club can actually reach members on right now. */
+    public function channelStatus(): JsonResponse
+    {
+        $this->authorize('crm.view');
+
+        return response()->json([
+            'channels' => collect($this->channels->status())
+                ->map(fn (bool $live, string $channel) => [
+                    'channel' => $channel,
+                    'live' => $live,
+                    'label' => __("crm.channel_{$channel}"),
+                ])
+                ->values(),
+            'placeholders' => ['{name}', '{full_name}', '{code}', '{club}', '{expires}', '{sessions}'],
+        ]);
+    }
+
     public function campaigns(Request $request): JsonResponse
     {
         $this->authorize('crm.view');
@@ -39,7 +63,7 @@ class CrmController extends Controller
             'scheduled_at' => ['nullable', 'date', 'after:now'],
         ]);
 
-        $recipients = $this->resolveAudience($data['audience']);
+        $recipients = $this->dispatcher->audience($data['audience']);
 
         $campaign = Campaign::create($data + [
             'status' => isset($data['scheduled_at']) ? 'scheduled' : 'draft',
@@ -51,27 +75,55 @@ class CrmController extends Controller
     }
 
     /**
-     * Marks the campaign as sent. Actual delivery is handed to whichever SMS
-     * or push provider the club configured, through the queue.
+     * Sends the campaign. Anything above a handful of recipients goes to the
+     * queue so the desk is not left staring at a spinner; a small one is sent
+     * inline so the manager sees the delivery count straight away.
      */
-    public function sendCampaign(Campaign $campaign): JsonResponse
+    public function sendCampaign(Request $request, Campaign $campaign): JsonResponse
     {
         $this->authorize('crm.update');
 
         abort_if(in_array($campaign->status, ['sent', 'sending'], true), 422, __('general.already_sent'));
 
-        $recipients = $this->resolveAudience($campaign->audience ?? ['type' => 'all']);
+        $recipients = $this->dispatcher->audience($campaign->audience ?? ['type' => 'all']);
+        $threshold = (int) config('gymflow.messaging.queue_above', 25);
 
-        $campaign->update([
-            'status' => 'sent',
-            'sent_at' => now(),
-            'recipients_count' => $recipients->count(),
-            'delivered_count' => $recipients->count(),
+        if ($recipients->count() > $threshold && ! $request->boolean('now')) {
+            $campaign->update(['status' => 'sending', 'recipients_count' => $recipients->count()]);
+
+            SendCampaign::dispatch($campaign->id, $campaign->tenant_id);
+
+            return response()->json([
+                'campaign' => $campaign->fresh(),
+                'queued' => true,
+                'recipients' => $recipients->count(),
+            ], 202);
+        }
+
+        $result = $this->dispatcher->send($campaign);
+
+        return response()->json(['campaign' => $campaign->fresh(), 'queued' => false] + $result);
+    }
+
+    /** Shows what one member would actually receive, before anything is sent. */
+    public function previewCampaign(Request $request): JsonResponse
+    {
+        $this->authorize('crm.view');
+
+        $data = $request->validate([
+            'body' => ['required', 'string', 'max:2000'],
+            'member_id' => ['nullable', 'exists:members,id'],
         ]);
 
+        $member = isset($data['member_id'])
+            ? Member::findOrFail($data['member_id'])
+            : Member::active()->first();
+
+        abort_unless($member, 422, __('general.no_members'));
+
         return response()->json([
-            'campaign' => $campaign->fresh(),
-            'recipients' => $recipients->count(),
+            'member' => $member->only(['id', 'code', 'first_name', 'last_name']),
+            'body' => $this->dispatcher->personalise($data['body'], $member),
         ]);
     }
 
@@ -86,7 +138,7 @@ class CrmController extends Controller
             'member_ids' => ['nullable', 'array'],
         ]);
 
-        $members = $this->resolveAudience($audience);
+        $members = $this->dispatcher->audience($audience);
 
         return response()->json([
             'count' => $members->count(),
@@ -190,28 +242,6 @@ class CrmController extends Controller
             ->exists();
 
         abort_unless($allowed, 403, __('auth.forbidden'));
-    }
-
-    /** @return Collection<int, Member> */
-    protected function resolveAudience(array $audience): Collection
-    {
-        $days = (int) ($audience['days'] ?? 30);
-
-        return match ($audience['type']) {
-            'active' => Member::active()->get(),
-            'inactive' => Member::active()
-                ->whereDoesntHave('attendances', fn ($q) => $q->where('checked_in_at', '>=', now()->subDays($days)))
-                ->get(),
-            'expiring' => Member::active()
-                ->whereHas('memberships', fn ($q) => $q->expiringWithin($days))
-                ->get(),
-            'birthday' => Member::active()
-                ->whereNotNull('birth_date')
-                ->whereMonth('birth_date', today()->month)
-                ->get(),
-            'selected' => Member::whereIn('id', $audience['member_ids'] ?? [])->get(),
-            default => Member::all(),
-        };
     }
 
     protected function senderType(Request $request): string

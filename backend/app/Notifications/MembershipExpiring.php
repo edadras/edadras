@@ -19,7 +19,7 @@ class MembershipExpiring extends Notification
     /** @return array<int, string> */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'push'];
     }
 
     /** @return array<string, mixed> */

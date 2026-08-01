@@ -1,6 +1,8 @@
 <?php
 
 return [
+
+    'no_members' => 'This club has no members yet.',
     'club_not_found' => 'No club matches this address.',
     'club_suspended' => 'This club is currently suspended. Please contact support.',
     'club_required' => 'A club must be selected before signing in.',

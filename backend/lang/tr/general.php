@@ -1,6 +1,8 @@
 <?php
 
 return [
+
+    'no_members' => 'Bu kulübün henüz üyesi yok.',
     'club_not_found' => 'Bu adrese ait bir kulüp bulunamadı.',
     'club_suspended' => 'Bu kulüp şu anda askıya alınmış durumda. Lütfen destek ile iletişime geçin.',
     'club_required' => 'Giriş yapmadan önce bir kulüp seçilmelidir.',

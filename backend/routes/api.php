@@ -156,6 +156,8 @@ Route::prefix('v1')->group(function () {
         Route::get('campaigns', [CrmController::class, 'campaigns']);
         Route::post('campaigns', [CrmController::class, 'storeCampaign']);
         Route::post('campaigns/audience', [CrmController::class, 'previewAudience']);
+        Route::post('campaigns/preview', [CrmController::class, 'previewCampaign']);
+        Route::get('campaigns/channels', [CrmController::class, 'channelStatus']);
         Route::post('campaigns/{campaign}/send', [CrmController::class, 'sendCampaign']);
         Route::get('conversations', [CrmController::class, 'conversations']);
         Route::post('conversations', [CrmController::class, 'startConversation']);

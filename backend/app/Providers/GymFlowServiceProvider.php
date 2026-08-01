@@ -3,12 +3,14 @@
 namespace App\Providers;
 
 use App\Models\Role;
+use App\Notifications\Channels\GymFlowPushChannel;
 use App\Services\Ai\ClaudeClient;
 use App\Services\DatabaseTranslationLoader;
 use App\Support\Auditor;
 use App\Support\Permissions;
 use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\ServiceProvider;
 
 class GymFlowServiceProvider extends ServiceProvider
@@ -41,5 +43,8 @@ class GymFlowServiceProvider extends ServiceProvider
         Gate::before(fn ($user) => $user->isSuperAdmin() ? true : null);
 
         Gate::define('owner-only', fn ($user) => $user->hasRole(Role::OWNER));
+
+        // Lets a notification list `push` next to `database`.
+        Notification::extend('push', fn ($app) => $app->make(GymFlowPushChannel::class));
     }
 }

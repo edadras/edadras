@@ -37,6 +37,12 @@ class TenantContext
         $this->tenant = null;
     }
 
+    /** The same, for a caller that only carries an id — queued jobs mostly. */
+    public function runAs(?int $tenantId, callable $callback): mixed
+    {
+        return $this->run($tenantId ? Tenant::find($tenantId) : null, $callback);
+    }
+
     /**
      * Run a callback as another tenant and restore the previous one after,
      * used by queued jobs, reports and the Super Admin panel.

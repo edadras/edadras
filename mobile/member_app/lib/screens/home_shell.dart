@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:gymflow_core/gymflow_core.dart';
 
 import 'membership_screen.dart';
+import 'profile_screen.dart';
 import 'programs_screen.dart';
 import 'schedule_screen.dart';
 
 /// Four tabs: the card the member shows at the door, the timetable they
-/// book from, their programs, and their history.
+/// book from, their programs, and their own account.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -25,6 +26,7 @@ class _HomeShellState extends State<HomeShell> {
       const MembershipScreen(),
       const ScheduleScreen(),
       const ProgramsScreen(),
+      const ProfileScreen(),
     ];
 
     return Scaffold(
@@ -50,6 +52,11 @@ class _HomeShellState extends State<HomeShell> {
             icon: const Icon(Icons.fitness_center_outlined),
             selectedIcon: const Icon(Icons.fitness_center, color: AppTheme.brand),
             label: t.t('members.programs', 'Programs'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.person_outline),
+            selectedIcon: const Icon(Icons.person, color: AppTheme.brand),
+            label: t.t('members.profile', 'Profile'),
           ),
         ],
       ),

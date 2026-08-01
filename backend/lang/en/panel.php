@@ -8,6 +8,9 @@
 return [
 
     'nav' => [
+        'more' => 'More',
+        'coaches' => 'Coaches',
+        'chat' => 'Chat',
         'dashboard' => 'Dashboard',
         'check_in' => 'Check-in',
         'members' => 'Members',
@@ -62,6 +65,12 @@ return [
     ],
 
     'checkin' => [
+        'mode_qr' => 'QR',
+        'mode_nfc' => 'NFC',
+        'mode_manual' => 'Code',
+        'nfc_hint' => 'Hold the card or wristband to the back of the phone',
+        'nfc_unavailable' => 'NFC is not available on this device.',
+        'offer_renewal' => 'Renew membership',
         'scan_hint' => 'Scan a QR badge or type the code',
         'code_placeholder' => 'Scan or type a code…',
         'enter' => 'Enter',
@@ -79,6 +88,17 @@ return [
     ],
 
     'members' => [
+        'profile' => 'Profile',
+        'profile_hint' => 'Your details, as the club has them',
+        'payments' => 'Payments',
+        'notifications' => 'Notifications',
+        'invoices' => 'Invoices',
+        'no_invoices' => 'No invoices yet.',
+        'wallet_history' => 'Wallet history',
+        'no_wallet' => 'No wallet activity yet.',
+        'due' => 'Due',
+        'mark_read' => 'Mark read',
+        'no_notifications' => 'Nothing new.',
         'name' => 'Name',
         'first_name' => 'First name',
         'last_name' => 'Last name',
@@ -123,6 +143,7 @@ return [
     ],
 
     'classes' => [
+        'no_bookings' => 'No bookings yet.',
         'kind' => 'Kind',
         'all' => 'All',
         'class' => 'Classes',
@@ -170,6 +191,11 @@ return [
     ],
 
     'ai' => [
+        'meal_breakfast' => 'Breakfast',
+        'meal_lunch' => 'Lunch',
+        'meal_dinner' => 'Dinner',
+        'meal_snack' => 'Snack',
+        'meal_supplement' => 'Supplement',
         'title' => 'Smart insights',
         'refresh' => 'Refresh',
         'refreshed' => 'Insights refreshed.',
@@ -231,6 +257,18 @@ return [
         'suspend' => 'Suspend',
         'activate' => 'Activate',
         'plans' => 'SaaS plans',
+    ],
+
+    'coaches' => [
+        'empty' => 'No coaches yet.',
+        'pay_salary' => 'Pay salary',
+    ],
+
+    'chat' => [
+        'empty' => 'No conversations yet.',
+        'member_empty' => 'Your coach has not started a chat yet.',
+        'say_hello' => 'Say hello.',
+        'message' => 'Message…',
     ],
 
 ];

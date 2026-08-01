@@ -4,10 +4,13 @@ import 'package:gymflow_core/gymflow_core.dart';
 import 'ai_screen.dart';
 import 'dashboard_screen.dart';
 import 'members_screen.dart';
+import 'more_screen.dart';
 import 'scanner_screen.dart';
 
-/// The manager app's tab bar. Tabs the signed in role cannot open are never
-/// built, so a receptionist opens straight onto the scanner.
+/// The manager app's tab bar. Only four things live here — the ones a phone
+/// is used for all day — and everything else sits behind "More". Tabs the
+/// signed-in role cannot open are never built, so a receptionist opens
+/// straight onto the scanner.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -52,17 +55,13 @@ class _HomeShellState extends State<HomeShell> {
           selectedIcon: Icons.auto_awesome,
           screen: const AiScreen(),
         ),
+      _Tab(
+        label: t.t('nav.more', 'More'),
+        icon: Icons.grid_view_outlined,
+        selectedIcon: Icons.grid_view,
+        screen: const MoreScreen(),
+      ),
     ];
-
-    if (tabs.isEmpty) {
-      return Scaffold(
-        body: GradientBackdrop(
-          child: Center(
-            child: Text(t.t('auth.forbidden', 'You do not have access to this app.')),
-          ),
-        ),
-      );
-    }
 
     final index = _index.clamp(0, tabs.length - 1);
 

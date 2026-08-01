@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\Conversation;
 use App\Models\Member;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -98,7 +99,7 @@ class CrmController extends Controller
         $this->authorize('chat.view');
 
         return response()->json(
-            Conversation::query()
+            $this->visibleConversations($request)
                 ->when($request->query('member_id'), fn ($q, $id) => $q->where('member_id', $id))
                 ->when($request->query('coach_id'), fn ($q, $id) => $q->where('coach_id', $id))
                 ->with('member:id,first_name,last_name,photo_path', 'coach:id,first_name,last_name')
@@ -110,6 +111,7 @@ class CrmController extends Controller
     public function messages(Request $request, Conversation $conversation): JsonResponse
     {
         $this->authorize('chat.view');
+        $this->authorizeThread($request, $conversation);
 
         $messages = $conversation->messages()->latest()->paginate($request->integer('per_page', 50));
 
@@ -125,6 +127,7 @@ class CrmController extends Controller
     public function sendMessage(Request $request, Conversation $conversation): JsonResponse
     {
         $this->authorize('chat.create');
+        $this->authorizeThread($request, $conversation);
 
         $data = $request->validate([
             'body' => ['required', 'string', 'max:4000'],
@@ -158,6 +161,35 @@ class CrmController extends Controller
         );
 
         return response()->json($conversation->load('member', 'coach'), 201);
+    }
+
+    /**
+     * A member sees their own threads and nobody else's; a coach sees the
+     * threads they are on. Staff with chat access see the whole club.
+     */
+    protected function visibleConversations(Request $request): Builder
+    {
+        $user = $request->user();
+
+        if ($member = $user->member) {
+            return Conversation::query()->where('member_id', $member->id);
+        }
+
+        if ($coach = $user->coach) {
+            return Conversation::query()->where('coach_id', $coach->id);
+        }
+
+        return Conversation::query();
+    }
+
+    /** Blocks reading or writing a thread the signed in user is not on. */
+    protected function authorizeThread(Request $request, Conversation $conversation): void
+    {
+        $allowed = $this->visibleConversations($request)
+            ->whereKey($conversation->id)
+            ->exists();
+
+        abort_unless($allowed, 403, __('auth.forbidden'));
     }
 
     /** @return Collection<int, Member> */

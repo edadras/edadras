@@ -7,6 +7,9 @@
 return [
 
     'nav' => [
+        'more' => 'بیشتر',
+        'coaches' => 'مربیان',
+        'chat' => 'گفتگو',
         'dashboard' => 'داشبورد',
         'check_in' => 'ورود و خروج',
         'members' => 'اعضا',
@@ -61,6 +64,12 @@ return [
     ],
 
     'checkin' => [
+        'mode_qr' => 'کیو‌آر',
+        'mode_nfc' => 'ان‌اف‌سی',
+        'mode_manual' => 'کد',
+        'nfc_hint' => 'کارت یا مچ‌بند را پشت گوشی نگه دارید',
+        'nfc_unavailable' => 'این دستگاه ان‌اف‌سی ندارد.',
+        'offer_renewal' => 'تمدید عضویت',
         'scan_hint' => 'کد QR را اسکن کنید یا کد را وارد کنید',
         'code_placeholder' => 'اسکن یا تایپ کد…',
         'enter' => 'ثبت ورود',
@@ -78,6 +87,17 @@ return [
     ],
 
     'members' => [
+        'profile' => 'پروفایل',
+        'profile_hint' => 'اطلاعات شما نزد باشگاه',
+        'payments' => 'پرداخت‌ها',
+        'notifications' => 'اعلان‌ها',
+        'invoices' => 'فاکتورها',
+        'no_invoices' => 'هنوز فاکتوری صادر نشده است.',
+        'wallet_history' => 'گردش کیف پول',
+        'no_wallet' => 'هنوز گردشی در کیف پول نیست.',
+        'due' => 'مانده',
+        'mark_read' => 'خوانده شد',
+        'no_notifications' => 'پیام تازه‌ای نیست.',
         'name' => 'نام',
         'first_name' => 'نام',
         'last_name' => 'نام خانوادگی',
@@ -122,6 +142,7 @@ return [
     ],
 
     'classes' => [
+        'no_bookings' => 'هنوز رزروی ثبت نشده است.',
         'kind' => 'نوع',
         'all' => 'همه',
         'class' => 'کلاس‌ها',
@@ -169,6 +190,11 @@ return [
     ],
 
     'ai' => [
+        'meal_breakfast' => 'صبحانه',
+        'meal_lunch' => 'ناهار',
+        'meal_dinner' => 'شام',
+        'meal_snack' => 'میان‌وعده',
+        'meal_supplement' => 'مکمل',
         'title' => 'تحلیل‌های هوشمند',
         'refresh' => 'به‌روزرسانی',
         'refreshed' => 'تحلیل‌ها به‌روزرسانی شد.',
@@ -230,6 +256,18 @@ return [
         'suspend' => 'تعلیق',
         'activate' => 'فعال‌سازی',
         'plans' => 'پلن‌های اشتراک',
+    ],
+
+    'coaches' => [
+        'empty' => 'هنوز مربی‌ای ثبت نشده است.',
+        'pay_salary' => 'پرداخت حقوق',
+    ],
+
+    'chat' => [
+        'empty' => 'هنوز گفتگویی نیست.',
+        'member_empty' => 'مربی شما هنوز گفتگویی شروع نکرده است.',
+        'say_hello' => 'سلام کنید.',
+        'message' => 'پیام…',
     ],
 
 ];

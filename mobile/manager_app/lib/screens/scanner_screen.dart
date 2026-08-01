@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:gymflow_core/gymflow_core.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:nfc_manager/nfc_manager.dart';
 
-/// The gate. The camera reads a member's QR badge, the API decides, and the
-/// screen answers with a green or red card the receptionist can read across
-/// the desk.
+/// The gate. A member's badge arrives as a QR scan, an NFC card, or a code
+/// typed by hand; the API decides, and the screen answers with a green or
+/// red card the receptionist can read across the desk.
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
 
@@ -12,20 +13,27 @@ class ScannerScreen extends StatefulWidget {
   State<ScannerScreen> createState() => _ScannerScreenState();
 }
 
+enum _InputMode { camera, nfc, manual }
+
 class _ScannerScreenState extends State<ScannerScreen> {
   final MobileScannerController _controller = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
     formats: const [BarcodeFormat.qrCode],
   );
+  final TextEditingController _manualController = TextEditingController();
 
+  _InputMode _mode = _InputMode.camera;
   CheckInResult? _result;
   bool _busy = false;
   bool _checkingOut = false;
+  bool _nfcListening = false;
   DateTime? _lastScan;
 
   @override
   void dispose() {
     _controller.dispose();
+    _manualController.dispose();
+    _stopNfc();
     super.dispose();
   }
 
@@ -35,15 +43,78 @@ class _ScannerScreenState extends State<ScannerScreen> {
       _lastScan != null && DateTime.now().difference(_lastScan!).inMilliseconds < 2000;
 
   Future<void> _onDetect(BarcodeCapture capture) async {
-    final token = capture.barcodes.firstOrNull?.rawValue;
+    final token = capture.barcodes.isEmpty ? null : capture.barcodes.first.rawValue;
 
     if (token == null || _busy || _isCoolingDown) return;
 
     _lastScan = DateTime.now();
-    await _submit(token);
+    await _submit(qrToken: token);
   }
 
-  Future<void> _submit(String token) async {
+  Future<void> _startNfc() async {
+    if (!await NfcManager.instance.isAvailable()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              TranslationsScope.of(context).t('checkin.nfc_unavailable', 'NFC is not available on this device.'),
+            ),
+          ),
+        );
+        setState(() => _mode = _InputMode.camera);
+      }
+
+      return;
+    }
+
+    setState(() => _nfcListening = true);
+
+    NfcManager.instance.startSession(
+      onDiscovered: (NfcTag tag) async {
+        final uid = _readTagId(tag);
+
+        if (uid == null || _busy || _isCoolingDown) return;
+
+        _lastScan = DateTime.now();
+        await _submit(nfcUid: uid);
+      },
+    );
+  }
+
+  Future<void> _stopNfc() async {
+    if (!_nfcListening) return;
+
+    _nfcListening = false;
+
+    try {
+      await NfcManager.instance.stopSession();
+    } catch (_) {
+      // Stopping a session that already ended is not worth surfacing.
+    }
+  }
+
+  /// Card serials sit under a different key per tag technology, so try the
+  /// ones a wristband or membership card actually uses.
+  String? _readTagId(NfcTag tag) {
+    for (final key in ['nfca', 'nfcb', 'nfcf', 'nfcv', 'mifare', 'iso7816', 'ndef']) {
+      final technology = tag.data[key];
+
+      if (technology is! Map) continue;
+
+      final identifier = technology['identifier'];
+
+      if (identifier is List) {
+        return identifier
+            .map((byte) => (byte as int).toRadixString(16).padLeft(2, '0'))
+            .join()
+            .toUpperCase();
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> _submit({String? qrToken, String? nfcUid}) async {
     final api = SessionScope.of(context).api;
     final t = TranslationsScope.of(context);
 
@@ -54,7 +125,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
     try {
       final path = _checkingOut ? '/attendance/check-out' : '/attendance/check-in';
-      final response = await api.post(path, body: {'qr_token': token, 'method': 'qr'});
+      final response = await api.post(path, body: {
+        if (qrToken != null) 'qr_token': qrToken,
+        if (nfcUid != null) 'nfc_uid': nfcUid,
+        'method': nfcUid != null ? 'nfc' : 'qr',
+      });
 
       setState(() {
         _result = CheckInResult.fromJson(
@@ -72,6 +147,15 @@ class _ScannerScreenState extends State<ScannerScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _changeMode(_InputMode mode) async {
+    if (mode == _mode) return;
+
+    await _stopNfc();
+    setState(() => _mode = mode);
+
+    if (mode == _InputMode.nfc) await _startNfc();
   }
 
   @override
@@ -104,24 +188,66 @@ class _ScannerScreenState extends State<ScannerScreen> {
           ),
         ),
 
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: SegmentedButton<_InputMode>(
+            segments: [
+              ButtonSegment(
+                value: _InputMode.camera,
+                icon: const Icon(Icons.qr_code_scanner, size: 18),
+                label: Text(t.t('checkin.mode_qr', 'QR')),
+              ),
+              ButtonSegment(
+                value: _InputMode.nfc,
+                icon: const Icon(Icons.nfc, size: 18),
+                label: Text(t.t('checkin.mode_nfc', 'NFC')),
+              ),
+              ButtonSegment(
+                value: _InputMode.manual,
+                icon: const Icon(Icons.keyboard, size: 18),
+                label: Text(t.t('checkin.mode_manual', 'Code')),
+              ),
+            ],
+            selected: {_mode},
+            onSelectionChanged: (value) => _changeMode(value.first),
+          ),
+        ),
+
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppTheme.glassRadius),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  MobileScanner(controller: _controller, onDetect: _onDetect),
-                  const _ScannerReticle(),
-                  if (_busy)
-                    const ColoredBox(
-                      color: Colors.black45,
-                      child: Center(child: CircularProgressIndicator(color: AppTheme.brand)),
-                    ),
-                ],
-              ),
-            ),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: switch (_mode) {
+              _InputMode.camera => ClipRRect(
+                  borderRadius: BorderRadius.circular(AppTheme.glassRadius),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      MobileScanner(controller: _controller, onDetect: _onDetect),
+                      const _ScannerReticle(),
+                      if (_busy)
+                        const ColoredBox(
+                          color: Colors.black45,
+                          child: Center(
+                            child: CircularProgressIndicator(color: AppTheme.brand),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              _InputMode.nfc => _NfcPrompt(listening: _nfcListening, busy: _busy),
+              _InputMode.manual => _ManualEntry(
+                  controller: _manualController,
+                  busy: _busy,
+                  onSubmit: () {
+                    final token = _manualController.text.trim();
+
+                    if (token.isEmpty) return;
+
+                    _manualController.clear();
+                    _submit(qrToken: token);
+                  },
+                ),
+            },
           ),
         ),
 
@@ -150,6 +276,81 @@ class _ScannerReticle extends StatelessWidget {
             borderRadius: BorderRadius.circular(28),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _NfcPrompt extends StatelessWidget {
+  const _NfcPrompt({required this.listening, required this.busy});
+
+  final bool listening;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = TranslationsScope.of(context);
+
+    return GlassCard(
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.nfc,
+              size: 64,
+              color: listening ? AppTheme.brand : AppTheme.ink400,
+            ),
+            const SizedBox(height: 18),
+            Text(
+              busy
+                  ? '…'
+                  : t.t('checkin.nfc_hint', 'Hold the card or wristband to the back of the phone'),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ManualEntry extends StatelessWidget {
+  const _ManualEntry({
+    required this.controller,
+    required this.busy,
+    required this.onSubmit,
+  });
+
+  final TextEditingController controller;
+  final bool busy;
+  final VoidCallback onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = TranslationsScope.of(context);
+
+    return GlassCard(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          TextField(
+            controller: controller,
+            autofocus: true,
+            onSubmitted: (_) => onSubmit(),
+            decoration: InputDecoration(
+              labelText: t.t('checkin.code_placeholder', 'Member code'),
+              prefixIcon: const Icon(Icons.badge_outlined, color: AppTheme.ink400),
+            ),
+          ),
+          const SizedBox(height: 16),
+          BrandButton(
+            label: t.t('checkin.enter', 'Enter'),
+            loading: busy,
+            onPressed: onSubmit,
+          ),
+        ],
       ),
     );
   }
@@ -249,7 +450,7 @@ class _ResultCard extends StatelessWidget {
                   if (result!.isRenewable) ...[
                     const SizedBox(height: 8),
                     Text(
-                      t.t('ai.campaign_expiring_body', 'Offer a renewal at the desk.'),
+                      t.t('checkin.offer_renewal', 'Offer a renewal at the desk.'),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -279,8 +480,4 @@ class _Pill extends StatelessWidget {
       child: Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.ink200)),
     );
   }
-}
-
-extension _FirstOrNull<E> on Iterable<E> {
-  E? get firstOrNull => isEmpty ? null : first;
 }

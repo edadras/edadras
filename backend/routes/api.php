@@ -186,6 +186,8 @@ Route::prefix('v1')->group(function () {
             Route::get('programs', [MemberAppController::class, 'programs']);
             Route::get('measurements', [MemberAppController::class, 'measurements']);
             Route::put('profile', [MemberAppController::class, 'updateProfile']);
+            Route::get('notifications', [MemberAppController::class, 'notifications']);
+            Route::post('notifications/read', [MemberAppController::class, 'markNotificationsRead']);
         });
 
         // ------------------------------------------------------- super admin

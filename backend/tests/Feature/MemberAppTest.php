@@ -5,10 +5,12 @@ namespace Tests\Feature;
 use App\Models\Attendance;
 use App\Models\ClassSession;
 use App\Models\Coach;
+use App\Models\Conversation;
 use App\Models\GymClass;
 use App\Models\Member;
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\MembershipExpiring;
 use App\Services\BookingService;
 use App\Services\CheckInService;
 use App\Services\MembershipService;
@@ -199,6 +201,95 @@ class MemberAppTest extends ClubTestCase
         ], $this->clubHeaders())
             ->assertOk()
             ->assertJsonStructure(['token', 'member', 'club']);
+    }
+
+    public function test_a_member_reads_and_clears_their_notifications(): void
+    {
+        $membership = $this->member->activeMembership;
+        $this->memberUser->notify(new MembershipExpiring($membership));
+
+        $response = $this->asMember()
+            ->withHeaders($this->clubHeaders())
+            ->getJson('/api/v1/me/notifications');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.data.type', 'membership_expiring')
+            ->assertJsonPath('data.0.read_at', null);
+
+        $this->asMember()
+            ->withHeaders($this->clubHeaders())
+            ->postJson('/api/v1/me/notifications/read')
+            ->assertOk();
+
+        $this->assertSame(0, $this->memberUser->fresh()->unreadNotifications()->count());
+    }
+
+    public function test_a_member_never_sees_another_member_notifications(): void
+    {
+        $otherUser = User::create([
+            'tenant_id' => $this->club->id,
+            'name' => 'Other Member',
+            'email' => 'other@test.club',
+            'phone' => '09129999999',
+            'password' => 'password',
+        ]);
+        Member::create(['user_id' => $otherUser->id, 'code' => '1002', 'first_name' => 'Other', 'last_name' => 'Member', 'phone' => '09129999999']);
+
+        $otherUser->notify(new MembershipExpiring($this->member->activeMembership));
+
+        $this->asMember()
+            ->withHeaders($this->clubHeaders())
+            ->getJson('/api/v1/me/notifications')
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+    }
+
+    public function test_a_member_only_sees_their_own_chat_threads(): void
+    {
+        $other = Member::create(['code' => '1002', 'first_name' => 'Other', 'last_name' => 'Member', 'phone' => '09129999999']);
+        $coach = Coach::create(['first_name' => 'C', 'last_name' => 'Four']);
+
+        $mine = Conversation::create(['member_id' => $this->member->id, 'coach_id' => $coach->id, 'last_message_at' => now()]);
+        $theirs = Conversation::create(['member_id' => $other->id, 'coach_id' => $coach->id, 'last_message_at' => now()]);
+
+        $theirs->messages()->create([
+            'tenant_id' => $this->club->id,
+            'sender_type' => 'coach',
+            'sender_id' => $this->memberUser->id,
+            'body' => 'Private note for the other member.',
+        ]);
+
+        $response = $this->asMember()
+            ->withHeaders($this->clubHeaders())
+            ->getJson('/api/v1/conversations');
+
+        $response->assertOk()->assertJsonCount(1, 'data');
+        $this->assertSame($mine->id, $response->json('data.0.id'));
+
+        $this->asMember()
+            ->withHeaders($this->clubHeaders())
+            ->getJson("/api/v1/conversations/{$theirs->id}/messages")
+            ->assertForbidden();
+
+        $this->asMember()
+            ->withHeaders($this->clubHeaders())
+            ->postJson("/api/v1/conversations/{$theirs->id}/messages", ['body' => 'Hello?'])
+            ->assertForbidden();
+    }
+
+    public function test_a_member_can_write_in_their_own_thread(): void
+    {
+        $coach = Coach::create(['first_name' => 'C', 'last_name' => 'Five']);
+        $conversation = Conversation::create(['member_id' => $this->member->id, 'coach_id' => $coach->id, 'last_message_at' => now()]);
+
+        $this->asMember()
+            ->withHeaders($this->clubHeaders())
+            ->postJson("/api/v1/conversations/{$conversation->id}/messages", ['body' => 'When is my next session?'])
+            ->assertCreated()
+            ->assertJsonPath('sender_type', 'member');
+
+        $this->assertSame(1, $conversation->messages()->count());
     }
 
     public function test_member_login_needs_the_right_club(): void

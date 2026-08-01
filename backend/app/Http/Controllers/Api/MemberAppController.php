@@ -205,6 +205,25 @@ class MemberAppController extends Controller
         return response()->json($member->fresh());
     }
 
+    /** Renewal reminders and anything else the club sent this member. */
+    public function notifications(Request $request): JsonResponse
+    {
+        $this->member($request);
+
+        return response()->json(
+            $request->user()->notifications()->paginate($request->integer('per_page', 30))
+        );
+    }
+
+    public function markNotificationsRead(Request $request): JsonResponse
+    {
+        $this->member($request);
+
+        $request->user()->unreadNotifications->markAsRead();
+
+        return response()->json(['message' => __('general.saved')]);
+    }
+
     protected function member(Request $request): Member
     {
         $member = $request->user()->member;

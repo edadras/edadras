@@ -12,9 +12,10 @@ dependencies:
     sdk: flutter
   gymflow_core:
     path: ../gymflow_core
-  # The reception desk reads QR badges with the camera, and NFC cards with
-  # the phone's reader.
+  # The reception desk reads QR badges with the camera, and NFC cards or
+  # wristbands with the phone's reader.
   mobile_scanner: ^5.2.3
+  nfc_manager: ^3.5.0
   fl_chart: ^0.69.0
   intl: ^0.19.0
 

@@ -7,6 +7,9 @@
 return [
 
     'nav' => [
+        'more' => 'Daha fazla',
+        'coaches' => 'Antrenörler',
+        'chat' => 'Sohbet',
         'dashboard' => 'Gösterge paneli',
         'check_in' => 'Giriş-çıkış',
         'members' => 'Üyeler',
@@ -61,6 +64,12 @@ return [
     ],
 
     'checkin' => [
+        'mode_qr' => 'QR',
+        'mode_nfc' => 'NFC',
+        'mode_manual' => 'Kod',
+        'nfc_hint' => 'Kartı veya bilekliği telefonun arkasına tutun',
+        'nfc_unavailable' => 'Bu cihazda NFC yok.',
+        'offer_renewal' => 'Üyeliği yenile',
         'scan_hint' => 'QR kartı okutun veya kodu yazın',
         'code_placeholder' => 'Kodu okutun veya yazın…',
         'enter' => 'Giriş',
@@ -78,6 +87,17 @@ return [
     ],
 
     'members' => [
+        'profile' => 'Profil',
+        'profile_hint' => 'Kulübün elindeki bilgileriniz',
+        'payments' => 'Ödemeler',
+        'notifications' => 'Bildirimler',
+        'invoices' => 'Faturalar',
+        'no_invoices' => 'Henüz fatura yok.',
+        'wallet_history' => 'Cüzdan hareketleri',
+        'no_wallet' => 'Henüz cüzdan hareketi yok.',
+        'due' => 'Kalan',
+        'mark_read' => 'Okundu işaretle',
+        'no_notifications' => 'Yeni bir şey yok.',
         'name' => 'Ad',
         'first_name' => 'Ad',
         'last_name' => 'Soyad',
@@ -122,6 +142,7 @@ return [
     ],
 
     'classes' => [
+        'no_bookings' => 'Henüz rezervasyon yok.',
         'kind' => 'Tür',
         'all' => 'Tümü',
         'class' => 'Dersler',
@@ -169,6 +190,11 @@ return [
     ],
 
     'ai' => [
+        'meal_breakfast' => 'Kahvaltı',
+        'meal_lunch' => 'Öğle yemeği',
+        'meal_dinner' => 'Akşam yemeği',
+        'meal_snack' => 'Ara öğün',
+        'meal_supplement' => 'Takviye',
         'title' => 'Akıllı içgörüler',
         'refresh' => 'Yenile',
         'refreshed' => 'İçgörüler yenilendi.',
@@ -230,6 +256,18 @@ return [
         'suspend' => 'Askıya al',
         'activate' => 'Etkinleştir',
         'plans' => 'SaaS paketleri',
+    ],
+
+    'coaches' => [
+        'empty' => 'Henüz antrenör yok.',
+        'pay_salary' => 'Maaş öde',
+    ],
+
+    'chat' => [
+        'empty' => 'Henüz sohbet yok.',
+        'member_empty' => 'Antrenörünüz henüz sohbet başlatmadı.',
+        'say_hello' => 'Merhaba deyin.',
+        'message' => 'Mesaj…',
     ],
 
 ];

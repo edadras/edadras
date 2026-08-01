@@ -84,7 +84,7 @@ class DatabaseTranslationLoader implements Loader
     public static function flush(): void
     {
         foreach (array_keys(config('gymflow.locales')) as $locale) {
-            foreach (['general', 'checkin', 'ai', 'validation', 'auth'] as $group) {
+            foreach (['general', 'checkin', 'booking', 'auth', 'ai', 'reports', 'panel', 'validation'] as $group) {
                 Cache::forget("translations:{$locale}:{$group}:global");
             }
         }

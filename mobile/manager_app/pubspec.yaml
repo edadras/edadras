@@ -1,0 +1,27 @@
+name: gymflow_manager
+description: GymFlow AI — the club manager app.
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+  flutter: ">=3.24.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  gymflow_core:
+    path: ../gymflow_core
+  # The reception desk reads QR badges with the camera, and NFC cards with
+  # the phone's reader.
+  mobile_scanner: ^5.2.3
+  fl_chart: ^0.69.0
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

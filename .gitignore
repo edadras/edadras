@@ -34,3 +34,8 @@ Thumbs.db
 .idea
 .vscode
 *.log
+
+# Tooling installed at the repo root during development
+/node_modules
+/package.json
+/package-lock.json

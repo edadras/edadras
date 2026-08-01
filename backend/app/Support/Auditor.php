@@ -19,7 +19,7 @@ class Auditor
     /** Values that must never reach the log, whichever model they came from. */
     public const REDACTED = [
         'password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes',
-        'token', 'api_token', 'qr_token', 'nfc_uid', 'secret',
+        'token', 'api_token', 'qr_token', 'gateway_token', 'nfc_uid', 'secret',
     ];
 
     /** Bookkeeping columns nobody wants to read in an audit trail. */

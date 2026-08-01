@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\FinanceController;
 use App\Http\Controllers\Api\MemberAppController;
 use App\Http\Controllers\Api\MemberController;
 use App\Http\Controllers\Api\MembershipController;
+use App\Http\Controllers\Api\OnlinePaymentController;
 use App\Http\Controllers\Api\PlatformController;
 use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\ReportController;
@@ -34,6 +35,12 @@ Route::prefix('v1')->group(function () {
     Route::post('clubs/register', [AuthController::class, 'registerClub']);
     Route::post('auth/login', [AuthController::class, 'login']);
     Route::post('auth/member-login', [AuthController::class, 'memberLogin']);
+
+    // The gateway redirects the payer here with no token of ours, so the club
+    // comes from the URL and the payment from a token only we issued.
+    Route::match(['get', 'post'], 'payments/callback/{tenant}/{token}', [OnlinePaymentController::class, 'callback'])
+        ->name('payments.callback')
+        ->withoutMiddleware('throttle:api');
 
     // ------------------------------------------------------------- signed in
     Route::middleware('auth:sanctum')->group(function () {
@@ -190,6 +197,9 @@ Route::prefix('v1')->group(function () {
             Route::get('measurements', [MemberAppController::class, 'measurements']);
             Route::put('profile', [MemberAppController::class, 'updateProfile']);
             Route::get('notifications', [MemberAppController::class, 'notifications']);
+            Route::get('payment-gateway', [OnlinePaymentController::class, 'gateway']);
+            Route::post('payments/start', [OnlinePaymentController::class, 'start']);
+            Route::get('payments/{payment}/status', [OnlinePaymentController::class, 'status']);
             Route::post('notifications/read', [MemberAppController::class, 'markNotificationsRead']);
         });
 

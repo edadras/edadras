@@ -129,4 +129,35 @@ return [
 
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Online payments
+    |--------------------------------------------------------------------------
+    | Until a club connects a real gateway the sandbox driver answers, so the
+    | whole checkout — start, redirect, verify, receipt — can be walked
+    | through without a bank. It never moves money.
+    */
+
+    'payments' => [
+
+        'default' => env('GYMFLOW_PAYMENT_GATEWAY', 'sandbox'),
+
+        'gateways' => [
+
+            'zarinpal' => [
+                'merchant_id' => env('ZARINPAL_MERCHANT_ID'),
+                'sandbox' => (bool) env('ZARINPAL_SANDBOX', false),
+                // IRT sends Toman figures as Rial; IRR sends them unchanged.
+                'currency' => env('ZARINPAL_CURRENCY', 'IRT'),
+            ],
+
+            'stripe' => [
+                'secret' => env('STRIPE_SECRET'),
+                'currency' => env('STRIPE_CURRENCY', 'usd'),
+            ],
+
+        ],
+
+    ],
+
 ];

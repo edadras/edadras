@@ -53,6 +53,10 @@ return new class extends Migration
             $table->decimal('amount', 12, 2);
             $table->string('method')->default('cash'); // cash, card, transfer, online, wallet
             $table->string('gateway')->nullable();
+            // Our own handle on an online payment. The gateway's reference
+            // lands in `reference` once it confirms, but the callback has to
+            // stay findable after that — payers refresh their receipt page.
+            $table->string('gateway_token')->nullable()->unique();
             $table->string('reference')->nullable();
             $table->string('status')->default('paid'); // pending, paid, failed, refunded
             $table->timestamp('paid_at')->nullable();

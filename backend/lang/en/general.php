@@ -2,6 +2,8 @@
 
 return [
 
+    'online_topup' => 'Online top-up',
+
     'no_members' => 'This club has no members yet.',
     'club_not_found' => 'No club matches this address.',
     'club_suspended' => 'This club is currently suspended. Please contact support.',

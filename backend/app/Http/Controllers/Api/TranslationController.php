@@ -31,7 +31,7 @@ class TranslationController extends Controller
     {
         abort_unless(array_key_exists($locale, config('gymflow.locales')), 404);
 
-        $groups = ['general', 'checkin', 'booking', 'auth', 'ai', 'reports', 'panel', 'crm'];
+        $groups = ['general', 'checkin', 'booking', 'auth', 'ai', 'reports', 'panel', 'crm', 'payments'];
         $lines = [];
 
         foreach ($groups as $group) {

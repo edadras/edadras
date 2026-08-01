@@ -133,6 +133,16 @@ class InvoiceService
         return 'INV-'.str_pad((string) $sequence, 6, '0', STR_PAD_LEFT);
     }
 
+    /** Books the cash box entry for a payment settled somewhere else. */
+    public function recordIncomeFor(Payment $payment): void
+    {
+        $payment->loadMissing('invoice.items');
+
+        if ($payment->invoice) {
+            $this->recordIncome($payment, $payment->invoice);
+        }
+    }
+
     protected function recordIncome(Payment $payment, Invoice $invoice): void
     {
         $category = $invoice->items->first()?->itemable_type === Product::class ? 'shop' : 'membership';
@@ -152,7 +162,7 @@ class InvoiceService
     }
 
     /** Keeps membership.paid_amount in step with the invoice it belongs to. */
-    protected function settleMembershipPayments(Invoice $invoice): void
+    public function settleMembershipPayments(Invoice $invoice): void
     {
         $invoice->loadMissing('items');
 

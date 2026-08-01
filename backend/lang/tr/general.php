@@ -2,6 +2,8 @@
 
 return [
 
+    'online_topup' => 'Çevrimiçi yükleme',
+
     'no_members' => 'Bu kulübün henüz üyesi yok.',
     'club_not_found' => 'Bu adrese ait bir kulüp bulunamadı.',
     'club_suspended' => 'Bu kulüp şu anda askıya alınmış durumda. Lütfen destek ile iletişime geçin.',
